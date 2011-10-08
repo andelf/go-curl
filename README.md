@@ -1,4 +1,4 @@
-my golang curl binding.
+my golang libcurl(curl) binding.
 
 
  * by andelf
