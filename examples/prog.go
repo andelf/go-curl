@@ -3,36 +3,14 @@ package main
 import (
 	"fmt"
 	"reflect"
-	"./curl/_obj/curl"
+	"../src/_obj/curl"
 )
 
-
-const (
-	a = iota
-	b string = "100"
-)
-
-
-func defer_recover() {
-	println("ok")
-	println("recover")
-	recover()
-
-}
-
-
-func printArgs(args ... interface{}) {
-	for _, v := range args {
-		fmt.Printf("%v -> %T\n", v, v)
-	}
-}
 
 
 const endl = "\n"
 
 func main() {
-	var c complex64 = 5+5i;
-	defer defer_recover()
 	ret := curl.EasyInit()
 	defer ret.Cleanup()
 	print("init =>", ret, " ", reflect.TypeOf(ret).String(), endl)
@@ -98,14 +76,5 @@ func main() {
 */
 	println("================================")
 	//println(curl.GlobalInit(curl.GLOBAL_SSL))
-	println(reflect.TypeOf(printArgs).String())
-
-	fmt.Printf("Hello World; \n 你好世界\n")
-	fmt.Printf("%s hah%da\n", b, a)
-	fmt.Printf("Value is:%v\n", c)
-	printArgs("hello", []int{1,2,3}, 123)
-	panic("fuck")
-	println("recover~")
-
 
 }

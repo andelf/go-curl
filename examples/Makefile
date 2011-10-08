@@ -3,7 +3,7 @@
 include $(GOROOT)/src/Make.inc
 
 
-TARG=helloworld
+TARG=prog
 
 GOFILES=\
 	prog.go
