@@ -6,9 +6,8 @@ import (
 	"../src/_obj/curl"
 )
 
-
-
 const endl = "\n"
+
 
 func main() {
 	ret := curl.EasyInit()
@@ -16,8 +15,8 @@ func main() {
 	print("init =>", ret, " ", reflect.TypeOf(ret).String(), endl)
 	ret = ret.Duphandle()
 	defer ret.Cleanup()
-	print("dup =>", ret, " ", reflect.TypeOf(ret).String(), endl)
 
+	print("dup =>", ret, " ", reflect.TypeOf(ret).String(), endl)
 	print("global init =>", curl.GlobalInit(curl.GLOBAL_ALL), endl)
 	print("version =>", curl.Version(), endl)
 	// debug

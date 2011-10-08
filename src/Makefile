@@ -9,7 +9,7 @@ TARG=curl
 
 # GOFILES=
 CGOFILES=\
-	curl.go \
+	core.go \
 	easy.go \
 	multi.go \
 	share.go \
