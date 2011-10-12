@@ -25,8 +25,6 @@ static CURLcode curl_easy_getinfo_double(CURL *curl, CURLINFO info, double *p) {
 static CURLcode curl_easy_getinfo_slist(CURL *curl, CURLINFO info, struct curl_slist *p) {
  return curl_easy_getinfo(curl, info, p);
 }
-// make curl_slist
-
 */
 import "C"
 
@@ -110,8 +108,9 @@ func (curl *CURL) Setopt(opt int, param interface{}) Code {
 	case opt > C.CURLOPTTYPE_OBJECTPOINT:
 		switch t := param.(type) {
 		case string:
+			// FIXME: memory leak, some opt needs
 			ptr := C.CString(t)
-			defer C.free(unsafe.Pointer(ptr))
+			// defer C.free(unsafe.Pointer(ptr))
 			ret := C.curl_easy_setopt_string(p, C.CURLoption(opt), ptr)
 			return Code(ret)
 		case []string:
@@ -123,8 +122,6 @@ func (curl *CURL) Setopt(opt int, param interface{}) Code {
 				}
 				return Code(C.curl_easy_setopt_slist(p, C.CURLoption(opt), a_slist))
 			} else {
-				// a_slist := (*_Ctype_strbbuct_curl_slist)nil
-				print("else")
 				return Code(C.curl_easy_setopt_slist(p, C.CURLoption(opt), nil))
 			}
 		default:
@@ -250,7 +247,6 @@ func (curl *CURL) Getinfo(info C.CURLINFO) (Code, interface{}) {
 		return ret, ret_slist
 	default:
 		panic("error calling Getinfo\n")
-
 	}
 	println("Not implemented yet.")
 	return Code(100), 0

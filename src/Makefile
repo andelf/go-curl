@@ -14,7 +14,7 @@ CGOFILES=\
 	multi.go \
 	share.go \
 	const.go \
-
+	callback.go \
 
 
 
