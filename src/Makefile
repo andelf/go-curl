@@ -17,5 +17,8 @@ CGOFILES=\
 	callback.go \
 
 
+CGO_OFILES=\
+	c-callback.o
+
 
 include $(GOROOT)/src/Make.pkg

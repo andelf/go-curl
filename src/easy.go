@@ -3,6 +3,7 @@ package curl
 /*
 #include <stdlib.h>
 #include <curl/curl.h>
+ #include "callback.h"
 static CURLcode curl_easy_setopt_long(CURL *handle, CURLoption option, long parameter) {
   return curl_easy_setopt(handle, option, parameter);
 }
@@ -98,6 +99,15 @@ func (curl *CURL) Setopt(opt int, param interface{}) Code {
 	p := curl.handle
 	// C.CURLoption
 	switch {
+	case opt == OPT_WRITEFUNCTION:
+		f := func(ptr []byte, size int, userdata interface{}) {
+			print("test function")
+			print(ptr, size, userdata)
+		}
+
+
+		println(C.make_c_callback_function(unsafe.Pointer(&f)))
+		return Code(1)
 	case opt > C.CURLOPTTYPE_OFF_T:
 		//
 		println("> off_t")
@@ -257,3 +267,12 @@ func (curl *CURL) Getinfo(info C.CURLINFO) (Code, interface{}) {
 // 	return C.GoString(ret)
 
 // }
+// size = size * nmemb in C
+type CallbackWriteFunction func(ptr interface{}, size int, userdata interface{}) uintptr
+
+//export callWriteFunctionCallback
+func callWriteFunctionCallback(f CallbackWriteFunction,	ptr *C.char, size C.size_t, userdata interface{}) uintptr {
+	buf := []byte(C.GoStringN(ptr, C.int(size)))
+	ret := f(buf, int(size), userdata)
+	return ret
+}
