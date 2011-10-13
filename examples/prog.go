@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"../src/_obj/curl"
+//	"os"
+//	"dump"
 )
 
 const endl = "\n"
@@ -25,20 +27,28 @@ func main() {
 
 
 	print("set header =>", ret.Setopt(curl.OPT_HEADER, true), endl)
+
 	// auto calculate port
 	// print("set port =>", ret.EasySetopt(curl.OPT_PORT, 6060), endl)
-	// curl.GlobalCleanup()
-	print("set timeout =>", ret.Setopt(curl.OPT_TIMEOUT, 20), endl)
-	print("set post data =>", ret.Setopt(curl.OPT_POSTFIELDS, "name=100"), endl)
 
-	print("set url =>", ret.Setopt(curl.OPT_URL, "http://www.google.com"), endl)
+	print("set timeout =>", ret.Setopt(curl.OPT_TIMEOUT, 20), endl)
+
+	// print("set post data =>", ret.Setopt(curl.OPT_POSTFIELDS, "loginname=andelf&loginpass=lovezcx"), endl)
+
+	//print("set post size =>", ret.Setopt(curl.OPT_POSTFIELDSIZE, 10), endl)
+
+	print("set url =>", ret.Setopt(curl.OPT_URL, "http://www.baidu.com:8000/"), endl)
+
+	//print("set url =>", ret.Setopt(curl.OPT_URL, "http://commondatastorage.googleapis.com/chromium-browser-continuous/Linux_x64/104547/chrome-linux.zip"), endl)
+
 	print("set user_agent =>", ret.Setopt(curl.OPT_USERAGENT, "go-curl v0.0.1"), endl)
 	// add to DNS cache
-	print("set resolve =>", ret.Setopt(curl.OPT_RESOLVE, []string{"www.baidu.com:6543:127.0.0.1",}), endl)
-
+	print("set resolve =>", ret.Setopt(curl.OPT_RESOLVE, []string{"www.baidu.com:8000:127.0.0.1",}), endl)
 	// ret.EasyReset()  clean seted
+
 	code := ret.Perform()
-	print("perfom =>", code, endl)
+//	dump.Dump(code)
+	fmt.Printf("code -> %v\n", code)
 
 
 	println("================================")
@@ -46,10 +56,10 @@ func main() {
 
 	print("escape =>", ret.Escape("http://baidu.com/"), endl)
 	print("unescape =>", ret.Unescape("http://baidu.com/-%00-%5c"), endl)
-	print("unescape lenght =>", len(ret.Unescape("http://baidu.com/-%00-%5c")), endl)
 
+	print("unescape lenght =>", len(ret.Unescape("http://baidu.com/-%00-%5c")), endl)
 	// print("version info data =>", curl.VersionInfo(1), endl)
-	ver := curl.VersionInfo(1)
+	ver := curl.VersionInfo(curl.VERSION_NOW)
 	fmt.Printf("VersionInfo: Age: %d, Version:%s, Host:%s, Features:%d, SslVer: %s, LibzV: %s, ssh: %s\n",
 		ver.Age, ver.Version, ver.Host, ver.Features, ver.SslVersion, ver.LibzVersion, ver.LibsshVersion)
 
@@ -61,7 +71,15 @@ func main() {
 	println(curl.Getdate("20111002 15:05:58 +0800").String())
 	ret.Getinfo(curl.INFO_EFFECTIVE_URL)
 	ret.Getinfo(curl.INFO_RESPONSE_CODE)
+
+	ret.Getinfo(curl.INFO_FILETIME)
+	ret.Getinfo(curl.INFO_SSL_ENGINES)
+
+
 	ret.Getinfo(curl.INFO_TOTAL_TIME)
+
+	println("================================")
+	ret.Setopt(curl.OPT_WRITEFUNCTION, 100)
 	// ret.Getinfo(curl.INFO_SSL_ENGINES)
 
 /*	mret := curl.MultiInit()
@@ -75,5 +93,4 @@ func main() {
 */
 	println("================================")
 	//println(curl.GlobalInit(curl.GLOBAL_SSL))
-
 }

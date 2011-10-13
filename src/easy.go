@@ -271,7 +271,13 @@ func (curl *CURL) Getinfo(info C.CURLINFO) (Code, interface{}) {
 type CallbackWriteFunction func(ptr interface{}, size int, userdata interface{}) uintptr
 
 //export callWriteFunctionCallback
-func callWriteFunctionCallback(f CallbackWriteFunction,	ptr *C.char, size C.size_t, userdata interface{}) uintptr {
+func callWriteFunctionCallback(
+	f CallbackWriteFunction,
+	ptr *C.char,
+	size C.size_t,
+	userdata interface{}) uintptr {
+
+	println("callWriteFunctionCallback DEBUG", f, ptr, size, userdata)
 	buf := []byte(C.GoStringN(ptr, C.int(size)))
 	ret := f(buf, int(size), userdata)
 	return ret
