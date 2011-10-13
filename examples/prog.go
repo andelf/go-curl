@@ -22,11 +22,9 @@ func main() {
 	print("global init =>", curl.GlobalInit(curl.GLOBAL_ALL), endl)
 	print("version =>", curl.Version(), endl)
 	// debug
-	print("set verbose =>", ret.Setopt(curl.OPT_VERBOSE, true), endl)
-	fmt.Printf("set verbose => %s. \n", ret.Setopt(curl.OPT_VERBOSE, true))
+	//print("set verbose =>", ret.Setopt(curl.OPT_VERBOSE, true), endl)
 
-
-	print("set header =>", ret.Setopt(curl.OPT_HEADER, true), endl)
+	//print("set header =>", ret.Setopt(curl.OPT_HEADER, true), endl)
 
 	// auto calculate port
 	// print("set port =>", ret.EasySetopt(curl.OPT_PORT, 6060), endl)
@@ -45,6 +43,12 @@ func main() {
 	// add to DNS cache
 	print("set resolve =>", ret.Setopt(curl.OPT_RESOLVE, []string{"www.baidu.com:8000:127.0.0.1",}), endl)
 	// ret.EasyReset()  clean seted
+
+
+	// currently not finished!
+	ret.Setopt(curl.OPT_WRITEFUNCTION, 1000)
+	println("set opt!")
+	// for test only
 
 	code := ret.Perform()
 //	dump.Dump(code)
@@ -79,7 +83,7 @@ func main() {
 	ret.Getinfo(curl.INFO_TOTAL_TIME)
 
 	println("================================")
-	ret.Setopt(curl.OPT_WRITEFUNCTION, 100)
+
 	// ret.Getinfo(curl.INFO_SSL_ENGINES)
 
 /*	mret := curl.MultiInit()

@@ -13,6 +13,10 @@ static CURLcode curl_easy_setopt_string(CURL *handle, CURLoption option, char *p
 static CURLcode curl_easy_setopt_slist(CURL *handle, CURLoption option, struct curl_slist *parameter) {
   return curl_easy_setopt(handle, option, parameter);
 }
+static CURLcode curl_easy_setopt_pointer(CURL *handle, CURLoption option, void *parameter) {
+  return curl_easy_setopt(handle, option, parameter);
+}
+
 // get info
 static CURLcode curl_easy_getinfo_string(CURL *curl, CURLINFO info, char **p) {
  return curl_easy_getinfo(curl, info, p);
@@ -35,9 +39,6 @@ import (
 )
 
 /*
-static CURLcode curl_easy_setopt_pointer(CURL *handle, CURLoption option, void *parameter) {
-  return curl_easy_setopt(handle, option, parameter);
-}
 */
 // consts
 /*
@@ -95,19 +96,23 @@ func (curl *CURL) Perform() Code {
 	return Code(C.curl_easy_perform(p))
 }
 
+var fooTest = func (ptr interface{}, size int, userdata interface{}) uintptr {
+	buf := ptr.([]byte)
+	print(buf, ptr, size, userdata)
+	return 0
+}
+
+
 func (curl *CURL) Setopt(opt int, param interface{}) Code {
 	p := curl.handle
 	// C.CURLoption
 	switch {
 	case opt == OPT_WRITEFUNCTION:
-		f := func(ptr []byte, size int, userdata interface{}) {
-			print("test function")
-			print(ptr, size, userdata)
-		}
 
+		ptr := C.make_c_callback_function(unsafe.Pointer(&fooTest))
+		println("ptr=", ptr)
+		return Code(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr))
 
-		println(C.make_c_callback_function(unsafe.Pointer(&f)))
-		return Code(1)
 	case opt > C.CURLOPTTYPE_OFF_T:
 		//
 		println("> off_t")
