@@ -66,9 +66,11 @@ size_t writefunction_template( char *ptr, size_t size, size_t nmemb, GoInterface
 
  // :)
 size_t writefunction_static_func( char *ptr, size_t size, size_t nmemb, void *userdata) {
-    volatile static void *func = NULL;
-    int called_flag = 0;
+        /* use static variable to save values */
+    static void *func = NULL;
+    static int called_flag = 0;
     size_t ret = 0;
+
 
     if (ptr == NULL) {
             /* set callback */
@@ -79,21 +81,17 @@ size_t writefunction_static_func( char *ptr, size_t size, size_t nmemb, void *us
                 /* not setted */
             return 0;
         } else {
-            printf("DEBUG size=%d, ptr=%s\n", (int)(size*nmemb), ptr);
             ret = callWriteFunctionCallback(func, ptr, size*nmemb, userdata);
-            called_flag += 0;
+            called_flag += 1;
         }
     }
-    return size*nmemb;
+    return ret;
 }
 
 void *return_sample_callback(void *go_func_pointer)
 {
         /* set function pointer */
     writefunction_static_func(NULL, 0, 0, go_func_pointer);
-
-    printf("go_func_pointer=%lx\n", &go_func_pointer);
-
     return &writefunction_static_func;
 }
 
@@ -121,8 +119,6 @@ void *make_c_callback_function(void *go_func_pointer) {
             ((void **)(p2+i))[0] = go_func_pointer;
             printf ("modify mem ok\n");
             break;
-
-
         }
     }
 
@@ -138,9 +134,9 @@ void *make_c_callback_function(void *go_func_pointer) {
 
 
     my_callback = (WRITEFUNCTION)functionSpace;
-    printf("my_callback=%lx\n", my_callback);
-    my_callback(NULL, 40, 100, &gi);
-    printf("my_callback, test called!\n");
+        //printf("my_callback=%lx\n", my_callback);
+        // my_callback(NULL, 40, 100, &gi);
+        //printf("my_callback, test called!\n");
 
 //    printf("~~~~~~~~~~~~~~~~wo~ca~lei~!~ %d\n", my_callback(NULL, 100,  100, NULL));
 

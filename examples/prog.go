@@ -44,7 +44,14 @@ func main() {
 
 
 	// currently not finished!
-	ret.Setopt(curl.OPT_WRITEFUNCTION, 1000)
+	fooTest := func (ptr interface{}, size uintptr, userdata interface{}) uintptr {
+		buf := ptr.([]byte)
+		println("DEBUG(in callback)", buf, ptr, size, userdata)
+		println("data = >", string(buf))
+		return size
+	}
+
+	ret.Setopt(curl.OPT_WRITEFUNCTION, curl.CallbackWriteFunction(fooTest))
 	println("set opt!")
 	// for test only
 

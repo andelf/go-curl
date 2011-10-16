@@ -97,10 +97,18 @@ func (curl *CURL) Perform() Code {
 	return Code(C.curl_easy_perform(p))
 }
 
-var fooTest = func (ptr interface{}, size int, userdata interface{}) uintptr {
-	buf := ptr.([]byte)
-	print(buf, ptr, size, userdata)
-	return 0
+type CallbackWriteFunction func(ptr interface{}, size uintptr, userdata interface{}) uintptr
+
+//export callWriteFunctionCallback
+func callWriteFunctionCallback(
+	f CallbackWriteFunction,
+	ptr *C.char,
+	size C.size_t,
+	userdata *interface{}) uintptr {
+
+	buf := []byte(C.GoStringN(ptr, C.int(size)))
+	ret := f(buf, uintptr(size), userdata)
+	return ret
 }
 
 
@@ -109,9 +117,13 @@ func (curl *CURL) Setopt(opt int, param interface{}) Code {
 	// C.CURLoption
 	switch {
 	case opt == OPT_WRITEFUNCTION:
-
+		fun := param.(CallbackWriteFunction)
+		// callWriteFunctionCallback(fun, C.CString("Hello, World"), 10, nil)
 		//ptr := C.make_c_callback_function(unsafe.Pointer(&fooTest))
-		ptr := C.return_sample_callback(unsafe.Pointer(&fooTest))
+		println("!!", &fun)
+		// why ? function pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
+		ptr := C.return_sample_callback(unsafe.Pointer(reflect.ValueOf(fun).Pointer()))
+		println("!!", reflect.ValueOf(fun).Pointer())
 		println("!!call setopt ptr=", ptr)
 		return Code(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr))
 
@@ -275,18 +287,3 @@ func (curl *CURL) Getinfo(info C.CURLINFO) (Code, interface{}) {
 
 // }
 // size = size * nmemb in C
-type CallbackWriteFunction func(ptr interface{}, size int, userdata interface{}) uintptr
-
-//export callWriteFunctionCallback
-func callWriteFunctionCallback(
-	f CallbackWriteFunction,
-	ptr *C.char,
-	size C.size_t,
-	userdata *interface{}) uintptr {
-
-	println("callWriteFunctionCallback DEBUG", f, ptr, size, userdata)
-	buf := []byte(C.GoStringN(ptr, C.int(size)))
-	println("callWriteFunctionCallback DEBUG 2", buf)
-	ret := f(buf, int(size), userdata)
-	return ret
-}
