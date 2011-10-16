@@ -31,8 +31,6 @@ func main() {
 
 	print("set timeout =>", ret.Setopt(curl.OPT_TIMEOUT, 20), endl)
 
-	// print("set post data =>", ret.Setopt(curl.OPT_POSTFIELDS, "loginname=andelf&loginpass=lovezcx"), endl)
-
 	//print("set post size =>", ret.Setopt(curl.OPT_POSTFIELDSIZE, 10), endl)
 
 	print("set url =>", ret.Setopt(curl.OPT_URL, "http://www.baidu.com:8000/"), endl)

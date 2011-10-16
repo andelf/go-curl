@@ -13,9 +13,35 @@ typedef uintptr (*callWriteFunctionCallback_t)(void* p0, schar* p1, uint64 p2, G
 
 typedef size_t (*WRITEFUNCTION)( char *ptr, size_t size, size_t nmemb, void *userdata);
 
+int foo(int a, void *b)
+{
+    printf("foo: %d %x\n", a, (long)b);
+    return 100;
+}
+typedef int (*FOO)(int, void *b);
+/*
+size_t writefunction_template( char *ptr, size_t size, size_t nmemb, GoInterface userdata) {
+    volatile register void *func = (void *)0x5151515151515151;
+    void *p = (void *)&foo;
+    void *q = NULL;
+    asm volatile (
+        "movq %1, %%rax;"
+        "nop; nop;"
+        "mov %%rax, %0;"
+        :"=r"(q)
+        :"g"(p)
+        :"%rax"
+        );
+//    foo(1, 2);
+    ((FOO)q)(100, (void *)func);
+    return size * nmemb;
+
+}
+*/
+
 
 size_t writefunction_template( char *ptr, size_t size, size_t nmemb, GoInterface userdata) {
-    register void *func = (void *)0x5151515151515151;
+    volatile register void *func = (void *)0x5151515151515151;
     void *p = (void *)&callWriteFunctionCallback;
     void *q = NULL;
         /* NOTE: ugly but works */
@@ -27,12 +53,49 @@ size_t writefunction_template( char *ptr, size_t size, size_t nmemb, GoInterface
         :"g"(p)
         :"%rax"
         );
+        /* debug */
+    if (size == 1) {
+        return 0;
+    }
+
     return ((callWriteFunctionCallback_t)q)(func, ptr, size*nmemb, userdata);
 //    return (size_t)func;
 
 }
 
 
+ // :)
+size_t writefunction_static_func( char *ptr, size_t size, size_t nmemb, void *userdata) {
+    volatile static void *func = NULL;
+    int called_flag = 0;
+    size_t ret = 0;
+
+    if (ptr == NULL) {
+            /* set callback */
+        func = userdata;
+        called_flag = 1;
+    } else {
+        if (called_flag == 0) {
+                /* not setted */
+            return 0;
+        } else {
+            printf("DEBUG size=%d, ptr=%s\n", (int)(size*nmemb), ptr);
+            ret = callWriteFunctionCallback(func, ptr, size*nmemb, userdata);
+            called_flag += 0;
+        }
+    }
+    return size*nmemb;
+}
+
+void *return_sample_callback(void *go_func_pointer)
+{
+        /* set function pointer */
+    writefunction_static_func(NULL, 0, 0, go_func_pointer);
+
+    printf("go_func_pointer=%lx\n", &go_func_pointer);
+
+    return &writefunction_static_func;
+}
 
 void *make_c_callback_function(void *go_func_pointer) {
     char *p = (char *)&writefunction_template;
@@ -42,23 +105,20 @@ void *make_c_callback_function(void *go_func_pointer) {
     int i, j;
     GoInterface gi;
 
+
+        //printf("~~~~~~~~~~~~~~~~wo~ca~lei~!~ %d\n", writefunction_template(NULL, 100,  100, gi));
+
         /* create a exec-able mem-space */
     functionSpace = mmap(NULL, 4096, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS, 0, 0);
     memcpy((char *)functionSpace, p, 1024);
 
-    printf ("in c, functionSpace %ul\n", functionSpace);
+    printf ("DEBUG: in c,functionSpace=%lx, go_func_pointer=%lx,\n", functionSpace, go_func_pointer);
 
     p2 = (char *)functionSpace;
 
     for (i = 0; i< 50; i++) {
         if (p[i] == '\x51') {
             ((void **)(p2+i))[0] = go_func_pointer;
-/*
-            printf ("debug~ size of go_func_pointer%d\n",sizeof(go_func_pointer));
-            for (j = 0; j < sizeof(go_func_pointer); j++) {
-                p2[i] = (char *)(&go_func_pointer)[i];
-                    //&((void **)(p + i)) = go_func_pointer;
-                    } */
             printf ("modify mem ok\n");
             break;
 
@@ -78,8 +138,11 @@ void *make_c_callback_function(void *go_func_pointer) {
 
 
     my_callback = (WRITEFUNCTION)functionSpace;
-    printf("my_callback=%x\n", my_callback);
+    printf("my_callback=%lx\n", my_callback);
+    my_callback(NULL, 40, 100, &gi);
+    printf("my_callback, test called!\n");
+
 //    printf("~~~~~~~~~~~~~~~~wo~ca~lei~!~ %d\n", my_callback(NULL, 100,  100, NULL));
 
-    return my_callback;
+    return my_callback - 0x1000;
 }

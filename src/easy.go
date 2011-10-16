@@ -3,7 +3,7 @@ package curl
 /*
 #include <stdlib.h>
 #include <curl/curl.h>
- #include "callback.h"
+#include "callback.h"
 static CURLcode curl_easy_setopt_long(CURL *handle, CURLoption option, long parameter) {
   return curl_easy_setopt(handle, option, parameter);
 }
@@ -30,6 +30,7 @@ static CURLcode curl_easy_getinfo_double(CURL *curl, CURLINFO info, double *p) {
 static CURLcode curl_easy_getinfo_slist(CURL *curl, CURLINFO info, struct curl_slist *p) {
  return curl_easy_getinfo(curl, info, p);
 }
+
 */
 import "C"
 
@@ -109,8 +110,9 @@ func (curl *CURL) Setopt(opt int, param interface{}) Code {
 	switch {
 	case opt == OPT_WRITEFUNCTION:
 
-		ptr := C.make_c_callback_function(unsafe.Pointer(&fooTest))
-		println("ptr=", ptr)
+		//ptr := C.make_c_callback_function(unsafe.Pointer(&fooTest))
+		ptr := C.return_sample_callback(unsafe.Pointer(&fooTest))
+		println("!!call setopt ptr=", ptr)
 		return Code(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr))
 
 	case opt > C.CURLOPTTYPE_OFF_T:
@@ -280,10 +282,11 @@ func callWriteFunctionCallback(
 	f CallbackWriteFunction,
 	ptr *C.char,
 	size C.size_t,
-	userdata interface{}) uintptr {
+	userdata *interface{}) uintptr {
 
 	println("callWriteFunctionCallback DEBUG", f, ptr, size, userdata)
 	buf := []byte(C.GoStringN(ptr, C.int(size)))
+	println("callWriteFunctionCallback DEBUG 2", buf)
 	ret := f(buf, int(size), userdata)
 	return ret
 }
