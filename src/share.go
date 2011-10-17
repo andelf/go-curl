@@ -7,20 +7,26 @@ package curl
 import "C"
 import (
 	"unsafe"
+	"os"
 )
 
-/*
-TODO
- CURLSHcode curl_share_setopt(CURLSH *, CURLSHoption option, ...);
-*/
+// implement os.Error interface
+type CurlShareError C.CURLMcode
 
-type SHCode C.CURLSHcode
-
-func (errornum SHCode) String() string {
+func (e CurlShareError) String() string {
 	// ret is const char*, no need to free
-	ret := C.curl_share_strerror(C.CURLSHcode(errornum))
+	ret := C.curl_share_strerror(C.CURLSHcode(e))
 	return C.GoString(ret)
 }
+
+
+func newCurlShareError(errno C.CURLSHcode) os.Error {
+	if errno == C.CURLSHE_OK {		// if nothing wrong
+		return nil
+	}
+	return CurlShareError(errno)
+}
+
 
 type CURLSH struct {
 	handle unsafe.Pointer
@@ -31,7 +37,7 @@ func ShareInit() *CURLSH {
 	return &CURLSH{p}
 }
 
-func (shcurl *CURLSH) Cleanup() MCode {
+func (shcurl *CURLSH) Cleanup() os.Error {
 	p := shcurl.handle
-	return MCode(C.curl_share_cleanup(p))
+	return newCurlShareError(C.curl_share_cleanup(p))
 }

@@ -37,6 +37,8 @@ import "C"
 import (
 	"unsafe"
 	"reflect"
+	"os"
+	"fmt"
 )
 
 /*
@@ -62,13 +64,22 @@ const (
 
 // ======================== functions ========
 
-// all ret code
-type Code C.CURLcode
 
-func (errornum Code) String() string {
+
+// all ret code
+type CurlError C.CURLcode
+
+func (e CurlError) String() string {
 	// ret is const char*, no need to free
-	ret := C.curl_easy_strerror(C.CURLcode(errornum))
-	return C.GoString(ret)
+	ret := C.curl_easy_strerror(C.CURLcode(e))
+	return fmt.Sprintf("curl: %s", C.GoString(ret))
+}
+
+func newCurlError(errno C.CURLcode) os.Error {
+	if errno == C.CURLE_OK {		// if nothing wrong
+		return nil
+	}
+	return CurlError(errno)
 }
 
 
@@ -92,43 +103,46 @@ func (curl *CURL) Cleanup() {
 	C.curl_easy_cleanup(p)
 }
 
-func (curl *CURL) Perform() Code {
+func (curl *CURL) Perform() os.Error {
 	p := curl.handle
-	return Code(C.curl_easy_perform(p))
+	return newCurlError(C.curl_easy_perform(p))
 }
 
-type CallbackWriteFunction func(ptr interface{}, size uintptr, userdata interface{}) uintptr
+// type CallbackWriteFunction func(ptr interface{}, size uintptr, userdata interface{}) uintptr
+// A callback function must be of type below:
+// return uintptr == size
+type CallbackWriteFunction func(ptr []byte, size uintptr, userdata interface{}) uintptr
 
+// export this function to c
 //export callWriteFunctionCallback
 func callWriteFunctionCallback(
 	f CallbackWriteFunction,
 	ptr *C.char,
 	size C.size_t,
 	userdata *interface{}) uintptr {
-
+	// TODO: avoid C char -> Go sting -> go []Byte
 	buf := []byte(C.GoStringN(ptr, C.int(size)))
 	ret := f(buf, uintptr(size), userdata)
 	return ret
 }
 
-
-func (curl *CURL) Setopt(opt int, param interface{}) Code {
+func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	p := curl.handle
-	// C.CURLoption
 	switch {
 	case opt == OPT_WRITEFUNCTION:
-		fun := param.(CallbackWriteFunction)
+		orgin_fun := param.(func([]byte, uintptr, interface{}) uintptr)
+		fun := CallbackWriteFunction(orgin_fun)
+//		fun := param.(CallbackWriteFunction)
 		// callWriteFunctionCallback(fun, C.CString("Hello, World"), 10, nil)
 		//ptr := C.make_c_callback_function(unsafe.Pointer(&fooTest))
-		println("!!", &fun)
-		// why ? function pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
+		// println("!!", &fun)
+		// WARNING: why ? function pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
 		ptr := C.return_sample_callback(unsafe.Pointer(reflect.ValueOf(fun).Pointer()))
-		println("!!", reflect.ValueOf(fun).Pointer())
-		println("!!call setopt ptr=", ptr)
-		return Code(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr))
+		// println("!!", reflect.ValueOf(fun).Pointer())
+		// println("!!call setopt ptr=", ptr)
+		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr))
 
 	case opt > C.CURLOPTTYPE_OFF_T:
-		//
 		println("> off_t")
 		break
 	case opt > C.CURLOPTTYPE_FUNCTIONPOINT:
@@ -137,11 +151,11 @@ func (curl *CURL) Setopt(opt int, param interface{}) Code {
 	case opt > C.CURLOPTTYPE_OBJECTPOINT:
 		switch t := param.(type) {
 		case string:
-			// FIXME: memory leak, some opt needs
+			// FIXME: memory leak, some opt needs we hold a c string till perform()
 			ptr := C.CString(t)
 			// defer C.free(unsafe.Pointer(ptr))
 			ret := C.curl_easy_setopt_string(p, C.CURLoption(opt), ptr)
-			return Code(ret)
+			return newCurlError(ret)
 		case []string:
 			print("my debug =>", "creating a list")
 			if len(t) > 0 {
@@ -149,21 +163,21 @@ func (curl *CURL) Setopt(opt int, param interface{}) Code {
 				for _, s := range t[1:] {
 					a_slist = C.curl_slist_append(a_slist, C.CString(s))
 				}
-				return Code(C.curl_easy_setopt_slist(p, C.CURLoption(opt), a_slist))
+				return newCurlError(C.curl_easy_setopt_slist(p, C.CURLoption(opt), a_slist))
 			} else {
-				return Code(C.curl_easy_setopt_slist(p, C.CURLoption(opt), nil))
+				return newCurlError(C.curl_easy_setopt_slist(p, C.CURLoption(opt), nil))
 			}
 		default:
 			val := reflect.ValueOf(param)
 			if val.CanAddr() {
 				//println(val)
 				println("=>", val.Addr().Pointer())
-				ret := C.curl_easy_setopt_long(p, C.CURLoption(opt),
-					C.long(val.Addr().Pointer()))
-				println(ret)
+				err := C.curl_easy_setopt_pointer(p, C.CURLoption(opt),
+					unsafe.Pointer(val.Addr().Pointer()))
+				return newCurlError(err)
 			} else {
 				panic("type error in param")
-				return Code(1)
+				return nil
 			}
 		}
 	case opt > C.CURLOPTTYPE_LONG:
@@ -172,32 +186,32 @@ func (curl *CURL) Setopt(opt int, param interface{}) Code {
 		case int:
 			val := C.long(t)
 			ret := C.curl_easy_setopt_long(p, C.CURLoption(opt), val)
-			return Code(ret)
+			return newCurlError(ret)
 		case bool:
 			val := 0
 			if t {
 				val = 1
 			}
 			ret := C.curl_easy_setopt_long(p, C.CURLoption(opt), C.long(val))
-			return Code(ret)
+			return newCurlError(ret)
 		default:
 			panic("type error in param")
-			return Code(1)
+			return newCurlError(1)
 		}
 	default:
 		panic("opt param error!")
-		return Code(1)
+		return newCurlError(1)
 	}
-	return Code(1)
+	return newCurlError(1)
 }
 
 // TODO: curl_easy_recv
 // TODO: curl_easy_send
 
 
-func (curl *CURL) Pause(bitmask int) Code {
+func (curl *CURL) Pause(bitmask int) os.Error {
 	p := curl.handle
-	return Code(C.curl_easy_pause(p, C.int(bitmask)))
+	return newCurlError(C.curl_easy_pause(p, C.int(bitmask)))
 }
 
 func (curl *CURL) Reset() {
@@ -245,45 +259,41 @@ const (
 	_INFO_TYPEMASK = C.CURLINFO_TYPEMASK
 )
 
-func (curl *CURL) Getinfo(info C.CURLINFO) (Code, interface{}) {
+func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err os.Error) {
 	p := curl.handle
 	switch info & _INFO_TYPEMASK {
 	case _INFO_STRING:
 		a_string := C.CString("")
 		defer C.free(unsafe.Pointer(a_string))
-		ret := Code(C.curl_easy_getinfo_string(p, info, &a_string));
-		print("debug (Getinfo) ", C.GoString(a_string), "\n")
-		return ret, C.GoString(a_string)
+		err := newCurlError(C.curl_easy_getinfo_string(p, info, &a_string));
+		ret := C.GoString(a_string)
+		print("debug (Getinfo) ", ret, "\n")
+		return ret, err
 	case _INFO_LONG:
 		a_long := C.long(-1)
-		ret := Code(C.curl_easy_getinfo_long(p, info, &a_long));
-		print("debug (Getinfo) ", int(a_long), "\n")
-		return ret, int(a_long)
+		err := newCurlError(C.curl_easy_getinfo_long(p, info, &a_long));
+		ret := int(a_long)
+		print("debug (Getinfo) ", ret, "\n")
+		return ret, err
 	case _INFO_DOUBLE:
 		a_double := C.double(0.0)
-		ret := Code(C.curl_easy_getinfo_double(p, info, &a_double));
-		print("debug (Getinfo) ", float64(a_double), "\n")
-		return ret, float64(a_double)
+		err := newCurlError(C.curl_easy_getinfo_double(p, info, &a_double));
+		ret := float64(a_double)
+		print("debug (Getinfo) ", ret, "\n")
+		return ret, err
 	case _INFO_SLIST:			// need fix
 		a_ptr_slist := new(_Ctype_struct_curl_slist)
-		ret := Code(C.curl_easy_getinfo_slist(p, info, a_ptr_slist));
-		ret_slist := []string{}
+		err := newCurlError(C.curl_easy_getinfo_slist(p, info, a_ptr_slist));
+		ret := []string{}
 		for a_ptr_slist != nil {
 			print("!!debug (Getinfo) ", C.GoString(a_ptr_slist.data), a_ptr_slist.next, "\n")
-			ret_slist = append(ret_slist, C.GoString(a_ptr_slist.data))
+			ret = append(ret, C.GoString(a_ptr_slist.data))
 			a_ptr_slist = a_ptr_slist.next
 		}
-		return ret, ret_slist
+		return ret, err
 	default:
 		panic("error calling Getinfo\n")
 	}
 	println("Not implemented yet.")
-	return Code(100), 0
+	return nil, nil
 }
-
-// func EasyStrerror(errornum Code) string {
-// 	ret := C.curl_easy_strerror(C.CURLcode(errornum))
-// 	return C.GoString(ret)
-
-// }
-// size = size * nmemb in C

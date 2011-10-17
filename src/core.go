@@ -12,6 +12,7 @@ import "C"
 import (
 	"unsafe"
 	"time"
+	"os"
 )
 
 const (
@@ -23,8 +24,8 @@ const (
 )
 
 
-func GlobalInit(flags int) int {
-	return int(C.curl_global_init(C.long(flags)))
+func GlobalInit(flags int) os.Error {
+	return newCurlError(C.curl_global_init(C.long(flags)))
 }
 
 // TODO: curl_global_init_mem

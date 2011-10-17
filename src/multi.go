@@ -8,15 +8,25 @@ package curl
 import "C"
 import (
 	"unsafe"
+	"os"
 )
 
-type MCode C.CURLMcode
+type CurlMultiError C.CURLMcode
 
-func (errornum MCode) String() string {
+func (e CurlMultiError) String() string {
 	// ret is const char*, no need to free
-	ret := C.curl_multi_strerror(C.CURLMcode(errornum))
+	ret := C.curl_multi_strerror(C.CURLMcode(e))
 	return C.GoString(ret)
 }
+
+
+func newCurlMultiError(errno C.CURLMcode) os.Error {
+	if errno == C.CURLM_OK {		// if nothing wrong
+		return nil
+	}
+	return CurlMultiError(errno)
+}
+
 
 type CURLM struct {
 	handle unsafe.Pointer
@@ -29,37 +39,37 @@ func MultiInit() *CURLM {
 }
 
 // ok
-func (mcurl *CURLM) Cleanup() MCode {
+func (mcurl *CURLM) Cleanup() os.Error {
 	p := mcurl.handle
-	return MCode(C.curl_multi_cleanup(p))
+	return newCurlMultiError(C.curl_multi_cleanup(p))
 }
 
 // ok
-func (mcurl *CURLM) Perform() (MCode, int) {
+func (mcurl *CURLM) Perform() (int, os.Error) {
 	p := mcurl.handle
 	running_handles := C.int(-1)
-	ret := MCode(C.curl_multi_perform(p, &running_handles))
-	return ret, int(running_handles)
+	err := newCurlMultiError(C.curl_multi_perform(p, &running_handles))
+	return int(running_handles), err
 }
 
 // ok
-func (mcurl *CURLM) AddHandle(easy *CURL) MCode {
+func (mcurl *CURLM) AddHandle(easy *CURL) os.Error {
 	mp := mcurl.handle
 	easy_handle := easy.handle
-	return MCode(C.curl_multi_add_handle(mp, easy_handle))
+	return newCurlMultiError(C.curl_multi_add_handle(mp, easy_handle))
 }
 
-func (mcurl *CURLM) RemoveHandle(easy *CURL) MCode {
+func (mcurl *CURLM) RemoveHandle(easy *CURL) os.Error {
 	mp := mcurl.handle
 	easy_handle := easy.handle
-	return MCode(C.curl_multi_remove_handle(mp, easy_handle))
+	return newCurlMultiError(C.curl_multi_remove_handle(mp, easy_handle))
 }
 
-func (mcurl *CURLM) Timeout() (MCode, int) {
+func (mcurl *CURLM) Timeout() (int, os.Error) {
 	p := mcurl.handle
 	timeout := C.long(-1)
-	ret := MCode(C.curl_multi_timeout(p, &timeout))
-	return ret, int(timeout)
+	err := newCurlMultiError(C.curl_multi_timeout(p, &timeout))
+	return int(timeout), err
 }
 
 
