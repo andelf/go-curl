@@ -7,6 +7,8 @@ my golang libcurl(curl) binding.
  * under active development
  * by andelf
 
+See more examples in ./examples/ directory~!
+
 Sample Program
 --------------
 
