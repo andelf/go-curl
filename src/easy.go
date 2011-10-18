@@ -82,12 +82,11 @@ func newCurlError(errno C.CURLcode) os.Error {
 	return CurlError(errno)
 }
 
-
+// curl_easy interface
 type CURL struct {
 	handle unsafe.Pointer
 }
 
-// easy handle
 func EasyInit() *CURL {
 	p := C.curl_easy_init()
 	return &CURL{p}
@@ -119,7 +118,7 @@ func callWriteFunctionCallback(
 	f CallbackWriteFunction,
 	ptr *C.char,
 	size C.size_t,
-	userdata *interface{}) uintptr {
+	userdata interface{}) uintptr {
 	// TODO: avoid C char -> Go sting -> go []Byte
 	buf := []byte(C.GoStringN(ptr, C.int(size)))
 	ret := f(buf, uintptr(size), userdata)
@@ -143,6 +142,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr))
 
 	case opt > C.CURLOPTTYPE_OFF_T:
+		// here we should use uint64
 		println("> off_t")
 		break
 	case opt > C.CURLOPTTYPE_FUNCTIONPOINT:
@@ -168,17 +168,14 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 				return newCurlError(C.curl_easy_setopt_slist(p, C.CURLoption(opt), nil))
 			}
 		default:
-			val := reflect.ValueOf(param)
-			if val.CanAddr() {
-				//println(val)
-				println("=>", val.Addr().Pointer())
-				err := C.curl_easy_setopt_pointer(p, C.CURLoption(opt),
-					unsafe.Pointer(val.Addr().Pointer()))
-				return newCurlError(err)
-			} else {
-				panic("type error in param")
-				return nil
-			}
+
+			// It panics if v's Kind is not Chan, Func, Map, Ptr, Slice, or UnsafePointer.
+			// val := reflect.ValueOf(param)
+			//fmt.Printf("DEBUG(Setopt): param=%x\n", val.Pointer())
+			//println("DEBUG can addr =", val.Pointer(), "opt=", opt)
+			// pass a pointer to GoInterface
+			return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt),
+				unsafe.Pointer(&param)))
 		}
 	case opt > C.CURLOPTTYPE_LONG:
 		// long

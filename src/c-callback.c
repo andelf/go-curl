@@ -71,7 +71,6 @@ size_t writefunction_static_func( char *ptr, size_t size, size_t nmemb, void *us
     static int called_flag = 0;
     size_t ret = 0;
 
-
     if (ptr == NULL) {
             /* set callback */
         func = userdata;
@@ -81,7 +80,8 @@ size_t writefunction_static_func( char *ptr, size_t size, size_t nmemb, void *us
                 /* not setted */
             return 0;
         } else {
-            ret = callWriteFunctionCallback(func, ptr, size*nmemb, userdata);
+                /* passing a GoInterface*, so convert to GoInterface */
+            ret = callWriteFunctionCallback(func, ptr, size*nmemb, *((GoInterface *)userdata));
             called_flag += 1;
         }
     }

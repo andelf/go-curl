@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"../src/_obj/curl"
-//	"os"
+	"os"
 //	"dump"
 )
 
@@ -12,6 +12,7 @@ const endl = "\n"
 
 
 func main() {
+	println("DEBUG chdir=>", os.Chdir("/sadf").String())
 	ret := curl.EasyInit()
 	defer ret.Cleanup()
 	print("init =>", ret, " ", reflect.TypeOf(ret).String(), endl)
@@ -29,29 +30,31 @@ func main() {
 	// auto calculate port
 	// print("set port =>", ret.EasySetopt(curl.OPT_PORT, 6060), endl)
 
+
 	print("set timeout =>", ret.Setopt(curl.OPT_TIMEOUT, 20), endl)
 
 	//print("set post size =>", ret.Setopt(curl.OPT_POSTFIELDSIZE, 10), endl)
-
-	print("set url =>", ret.Setopt(curl.OPT_URL, "http://www.baidu.com:8000/"), endl)
-
+	if ret.Setopt(curl.OPT_URL, "http://www.baidu.com:8000/") != nil {
+		println("set url ok!")
+	}
 	//print("set url =>", ret.Setopt(curl.OPT_URL, "http://commondatastorage.googleapis.com/chromium-browser-continuous/Linux_x64/104547/chrome-linux.zip"), endl)
 
-	print("set user_agent =>", ret.Setopt(curl.OPT_USERAGENT, "go-curl v0.0.1"), endl)
+	print("set user_agent =>", ret.Setopt(curl.OPT_USERAGENT, "go-curl v0.0.1") == nil, endl)
 	// add to DNS cache
-	print("set resolve =>", ret.Setopt(curl.OPT_RESOLVE, []string{"www.baidu.com:8000:127.0.0.1",}), endl)
+	print("set resolve =>", ret.Setopt(curl.OPT_RESOLVE, []string{"www.baidu.com:8000:127.0.0.1",}) == nil, endl)
 	// ret.EasyReset()  clean seted
 
-
 	// currently not finished!
-	fooTest := func (ptr interface{}, size uintptr, userdata interface{}) uintptr {
-		buf := ptr.([]byte)
-		println("DEBUG(in callback)", buf, ptr, size, userdata)
+	//
+	fooTest := func (buf []byte, size uintptr, userdata interface{}) uintptr {
+		// buf := ptr.([]byte)
+		println("size=>", len(buf))
+		println("DEBUG(in callback)", buf, size, userdata)
 		println("data = >", string(buf))
 		return size
 	}
 
-	ret.Setopt(curl.OPT_WRITEFUNCTION, curl.CallbackWriteFunction(fooTest))
+	ret.Setopt(curl.OPT_WRITEFUNCTION, fooTest) // curl.CallbackWriteFunction(fooTest))
 	println("set opt!")
 	// for test only
 
