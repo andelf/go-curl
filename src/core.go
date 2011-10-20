@@ -30,7 +30,7 @@ func GlobalInit(flags int) os.Error {
 
 // TODO: curl_global_init_mem
 func GlobalInitMem(args ...interface{}) {
-	print(args, "Not implemented yet!")
+	panic("curl_global_init_mem not implemented yet!")
 }
 
 

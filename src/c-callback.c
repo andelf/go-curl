@@ -13,12 +13,6 @@ typedef uintptr (*callWriteFunctionCallback_t)(void* p0, schar* p1, uint64 p2, G
 
 typedef size_t (*WRITEFUNCTION)( char *ptr, size_t size, size_t nmemb, void *userdata);
 
-int foo(int a, void *b)
-{
-    printf("foo: %d %x\n", a, (long)b);
-    return 100;
-}
-typedef int (*FOO)(int, void *b);
 /*
 size_t writefunction_template( char *ptr, size_t size, size_t nmemb, GoInterface userdata) {
     volatile register void *func = (void *)0x5151515151515151;
@@ -80,9 +74,6 @@ size_t writefunction_static_func( char *ptr, size_t size, size_t nmemb, void *us
                 /* not setted */
             return 0;
         } else {
-                /* passing a GoInterface*, so convert to GoInterface */
-            printf("DEBUG in static func 0x%lx\n",  userdata);
-
             ret = callWriteFunctionCallback(func, ptr, size*nmemb, *((GoInterface *)userdata));
             called_flag += 1;
         }
@@ -92,7 +83,6 @@ size_t writefunction_static_func( char *ptr, size_t size, size_t nmemb, void *us
 
 void *return_sample_callback(void *go_func_pointer)
 {
-        /* set function pointer */
     writefunction_static_func(NULL, 0, 0, go_func_pointer);
     return &writefunction_static_func;
 }
@@ -105,42 +95,20 @@ void *make_c_callback_function(void *go_func_pointer) {
     int i, j;
     GoInterface gi;
 
-
-        //printf("~~~~~~~~~~~~~~~~wo~ca~lei~!~ %d\n", writefunction_template(NULL, 100,  100, gi));
-
         /* create a exec-able mem-space */
     functionSpace = mmap(NULL, 4096, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS, 0, 0);
     memcpy((char *)functionSpace, p, 1024);
-
-    printf ("DEBUG: in c,functionSpace=%lx, go_func_pointer=%lx,\n", functionSpace, go_func_pointer);
 
     p2 = (char *)functionSpace;
 
     for (i = 0; i< 50; i++) {
         if (p[i] == '\x51') {
             ((void **)(p2+i))[0] = go_func_pointer;
-            printf ("modify mem ok\n");
             break;
         }
     }
-
-    for (i = 0; i < 50; ++i)
-    {
-        printf("%d: %08x -- %08x\n", i, p[i], ((char *)functionSpace)[i]);
-        if (p[i] == '\xc3')
-        {
-            break;
-        }
-
-    }
-
 
     my_callback = (WRITEFUNCTION)functionSpace;
-        //printf("my_callback=%lx\n", my_callback);
-        // my_callback(NULL, 40, 100, &gi);
-        //printf("my_callback, test called!\n");
 
-//    printf("~~~~~~~~~~~~~~~~wo~ca~lei~!~ %d\n", my_callback(NULL, 100,  100, NULL));
-
-    return my_callback - 0x1000;
+    return my_callback;
 }

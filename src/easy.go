@@ -82,10 +82,11 @@ func newCurlError(errno C.CURLcode) os.Error {
 	return CurlError(errno)
 }
 
-// curl_easy interface
-/* typedef int (*curl_progress_callback)(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
-size_t writefunction_static_func( char *ptr, size_t size, size_t nmemb, void *userdata) { */
 
+// int (*curl_progress_callback)(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
+// size_t writefunction_static_func( char *ptr, size_t size, size_t nmemb, void *userdata);
+
+// curl_easy interface
 type CURL struct {
 	handle unsafe.Pointer
 	onDataAvailable, onHeaderAvailable func([]byte, uintptr, interface{}) uintptr
@@ -130,7 +131,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	p := curl.handle
 	switch {
 	case opt == OPT_READFUNCTION:
-		panic("not implemented yet!")
+		panic("readfunction not implemented yet!")
 	case opt == OPT_HEADERFUNCTION:
 		fun := param.(func([]byte, uintptr, interface{}) uintptr)
 		curl.onHeaderAvailable = fun
@@ -149,13 +150,12 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 		ptr := C.return_sample_callback(unsafe.Pointer(reflect.ValueOf(fun).Pointer()))
 		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr))
 
-
 	case opt > C.CURLOPTTYPE_OFF_T:
 		// here we should use uint64
-		println("> off_t")
-		break
+		panic("> off_t not implemented yet!")
 	case opt > C.CURLOPTTYPE_FUNCTIONPOINT:
 		// function pointer
+		panic("function poionter not implemented yet!")
 		break
 	case opt > C.CURLOPTTYPE_OBJECTPOINT:
 		switch t := param.(type) {
@@ -166,7 +166,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 			ret := C.curl_easy_setopt_string(p, C.CURLoption(opt), ptr)
 			return newCurlError(ret)
 		case []string:
-			print("my debug =>", "creating a list")
+			println("DEBUG(setopt)", "creating a list")
 			if len(t) > 0 {
 				a_slist := C.curl_slist_append(nil, C.CString(t[0]))
 				for _, s := range t[1:] {
@@ -177,7 +177,6 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 				return newCurlError(C.curl_easy_setopt_slist(p, C.CURLoption(opt), nil))
 			}
 		default:
-
 			// It panics if v's Kind is not Chan, Func, Map, Ptr, Slice, or UnsafePointer.
 			// val := reflect.ValueOf(param)
 			//fmt.Printf("DEBUG(Setopt): param=%x\n", val.Pointer())
@@ -202,12 +201,9 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 			return newCurlError(ret)
 		default:
 			panic("type error in param")
-			return newCurlError(1)
 		}
-	default:
-		panic("opt param error!")
-		return newCurlError(1)
 	}
+	panic("opt param error!")
 	return newCurlError(1)
 }
 
@@ -300,6 +296,6 @@ func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err os.Error) {
 	default:
 		panic("error calling Getinfo\n")
 	}
-	println("Not implemented yet.")
+	panic("not implemented yet!")
 	return nil, nil
 }
