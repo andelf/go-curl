@@ -83,18 +83,23 @@ func newCurlError(errno C.CURLcode) os.Error {
 }
 
 // curl_easy interface
+/* typedef int (*curl_progress_callback)(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
+size_t writefunction_static_func( char *ptr, size_t size, size_t nmemb, void *userdata) { */
+
 type CURL struct {
 	handle unsafe.Pointer
+	onDataAvailable, onHeaderAvailable func([]byte, uintptr, interface{}) uintptr
+	onProgressAvailable func(interface{}, float64, float64, float64, float64) int
 }
 
 func EasyInit() *CURL {
 	p := C.curl_easy_init()
-	return &CURL{p}
+	return &CURL{p, nil, nil, nil}
 }
 
 func (curl *CURL) Duphandle() *CURL {
 	p := curl.handle
-	return &CURL{C.curl_easy_duphandle(p)}
+	return &CURL{C.curl_easy_duphandle(p), nil, nil, nil}
 }
 
 func (curl *CURL) Cleanup() {
@@ -107,15 +112,10 @@ func (curl *CURL) Perform() os.Error {
 	return newCurlError(C.curl_easy_perform(p))
 }
 
-// type CallbackWriteFunction func(ptr interface{}, size uintptr, userdata interface{}) uintptr
-// A callback function must be of type below:
-// return uintptr == size
-type CallbackWriteFunction func(ptr []byte, size uintptr, userdata interface{}) uintptr
-
 // export this function to c
 //export callWriteFunctionCallback
 func callWriteFunctionCallback(
-	f CallbackWriteFunction,
+	f func([]byte, uintptr, interface{}) uintptr,
 	ptr *C.char,
 	size C.size_t,
 	userdata interface{}) uintptr {
@@ -125,21 +125,30 @@ func callWriteFunctionCallback(
 	return ret
 }
 
+// WARNING: why ? function pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
 func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	p := curl.handle
 	switch {
-	case opt == OPT_WRITEFUNCTION:
-		orgin_fun := param.(func([]byte, uintptr, interface{}) uintptr)
-		fun := CallbackWriteFunction(orgin_fun)
-//		fun := param.(CallbackWriteFunction)
-		// callWriteFunctionCallback(fun, C.CString("Hello, World"), 10, nil)
-		//ptr := C.make_c_callback_function(unsafe.Pointer(&fooTest))
-		// println("!!", &fun)
-		// WARNING: why ? function pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
+	case opt == OPT_READFUNCTION:
+		panic("not implemented yet!")
+	case opt == OPT_HEADERFUNCTION:
+		fun := param.(func([]byte, uintptr, interface{}) uintptr)
+		curl.onHeaderAvailable = fun
+
 		ptr := C.return_sample_callback(unsafe.Pointer(reflect.ValueOf(fun).Pointer()))
-		// println("!!", reflect.ValueOf(fun).Pointer())
-		// println("!!call setopt ptr=", ptr)
+		if err := newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr)); err == nil {
+			return newCurlError(C.curl_easy_setopt_pointer(p, OPT_HEADERDATA, unsafe.Pointer(reflect.ValueOf(fun).Pointer())))
+		} else {
+			return err
+		}
+
+	case opt == OPT_WRITEFUNCTION:
+		fun := param.(func([]byte, uintptr, interface{}) uintptr)
+		curl.onDataAvailable = fun
+
+		ptr := C.return_sample_callback(unsafe.Pointer(reflect.ValueOf(fun).Pointer()))
 		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr))
+
 
 	case opt > C.CURLOPTTYPE_OFF_T:
 		// here we should use uint64

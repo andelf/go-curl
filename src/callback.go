@@ -5,19 +5,23 @@ package curl
 */
 import "C"
 
-// import (
-// 	"unsafe"
-// 	"reflect"
-// )
+import (
+ 	"unsafe"
+ 	"reflect"
+)
 
 
 
-type ReadFunc func(ptr []byte, size, nmemb uintptr, userdata interface{}) uintptr
-
-//export callReadFunc
-func callReadFunc(f interface{}, ptr interface{}, size, nmemb uintptr, userdata interface{}) uintptr {
-	fun := f.(ReadFunc)
-	bufptr := ptr.([]byte)
-
-	return fun(bufptr, size, nmemb, userdata)
+//export getCurlField
+func getCurlField(p uintptr, name string) uintptr {
+	curl := (* CURL)(unsafe.Pointer(p))
+	switch name {
+	case "onDataAvailable":
+		return reflect.ValueOf(curl.onDataAvailable).Pointer()
+	case "onHeaderAvailable":
+		return reflect.ValueOf(curl.onHeaderAvailable).Pointer()
+	case "onProgressAvailable":
+		return reflect.ValueOf(curl.onProgressAvailable).Pointer()
+	}
+	return 0
 }

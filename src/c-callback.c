@@ -81,6 +81,8 @@ size_t writefunction_static_func( char *ptr, size_t size, size_t nmemb, void *us
             return 0;
         } else {
                 /* passing a GoInterface*, so convert to GoInterface */
+            printf("DEBUG in static func 0x%lx\n",  userdata);
+
             ret = callWriteFunctionCallback(func, ptr, size*nmemb, *((GoInterface *)userdata));
             called_flag += 1;
         }
