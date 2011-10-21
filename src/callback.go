@@ -10,18 +10,27 @@ import (
  	"reflect"
 )
 
-
-
 //export getCurlField
-func getCurlField(p uintptr, name string) uintptr {
+func getCurlField(p uintptr, cname *C.char) uintptr {
+	name := C.GoString(cname)
 	curl := (* CURL)(unsafe.Pointer(p))
 	switch name {
-	case "onDataAvailable":
-		return reflect.ValueOf(curl.onDataAvailable).Pointer()
-	case "onHeaderAvailable":
-		return reflect.ValueOf(curl.onHeaderAvailable).Pointer()
-	case "onProgressAvailable":
-		return reflect.ValueOf(curl.onProgressAvailable).Pointer()
+	case "readFunction":
+		return reflect.ValueOf(curl.readFunction).Pointer()
+	case "headerFunction":
+		return reflect.ValueOf(curl.headerFunction).Pointer()
+	case "writeFunction":
+		return reflect.ValueOf(curl.writeFunction).Pointer()
+	case "progressFuncion":
+		return reflect.ValueOf(curl.progressFuncion).Pointer()
+	case "headerData":
+		return uintptr(unsafe.Pointer(curl.headerData))
 	}
+	println("WARNING: field not found: ", name)
 	return 0
+}
+
+//export nilInterface
+func nilInterface() interface{}{
+	return nil
 }

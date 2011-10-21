@@ -89,18 +89,19 @@ func newCurlError(errno C.CURLcode) os.Error {
 // curl_easy interface
 type CURL struct {
 	handle unsafe.Pointer
-	onDataAvailable, onHeaderAvailable func([]byte, uintptr, interface{}) uintptr
-	onProgressAvailable func(interface{}, float64, float64, float64, float64) int
+	progressFuncion func(interface{}, float64, float64, float64, float64) int
+	headerFunction, writeFunction, readFunction func([]byte, uintptr, interface{}) uintptr
+	headerData, writeData, readData *interface{}
 }
 
 func EasyInit() *CURL {
 	p := C.curl_easy_init()
-	return &CURL{p, nil, nil, nil}
+	return &CURL{handle: p}		// other field defaults to nil
 }
 
 func (curl *CURL) Duphandle() *CURL {
 	p := curl.handle
-	return &CURL{C.curl_easy_duphandle(p), nil, nil, nil}
+	return &CURL{handle: C.curl_easy_duphandle(p)}
 }
 
 func (curl *CURL) Cleanup() {
@@ -132,20 +133,24 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	switch {
 	case opt == OPT_READFUNCTION:
 		panic("readfunction not implemented yet!")
+	case opt == OPT_HEADERDATA:
+		curl.headerData = &param
+		return nil
 	case opt == OPT_HEADERFUNCTION:
 		fun := param.(func([]byte, uintptr, interface{}) uintptr)
-		curl.onHeaderAvailable = fun
-
-		ptr := C.return_sample_callback(unsafe.Pointer(reflect.ValueOf(fun).Pointer()))
+		curl.headerFunction = fun
+		// unsafe.Pointer(reflect.ValueOf(fun).Pointer()))
+		ptr := C.return_header_function()
 		if err := newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr)); err == nil {
-			return newCurlError(C.curl_easy_setopt_pointer(p, OPT_HEADERDATA, unsafe.Pointer(reflect.ValueOf(fun).Pointer())))
+			return newCurlError(C.curl_easy_setopt_pointer(p, OPT_HEADERDATA,
+				unsafe.Pointer(reflect.ValueOf(curl).Pointer())))
 		} else {
 			return err
 		}
 
 	case opt == OPT_WRITEFUNCTION:
 		fun := param.(func([]byte, uintptr, interface{}) uintptr)
-		curl.onDataAvailable = fun
+		curl.writeFunction = fun
 
 		ptr := C.return_sample_callback(unsafe.Pointer(reflect.ValueOf(fun).Pointer()))
 		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr))
