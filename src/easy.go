@@ -139,7 +139,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	case opt == OPT_HEADERFUNCTION:
 		fun := param.(func([]byte, uintptr, interface{}) uintptr)
 		curl.headerFunction = fun
-		// unsafe.Pointer(reflect.ValueOf(fun).Pointer()))
+
 		ptr := C.return_header_function()
 		if err := newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr)); err == nil {
 			return newCurlError(C.curl_easy_setopt_pointer(p, OPT_HEADERDATA,
@@ -147,13 +147,21 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 		} else {
 			return err
 		}
-
+	// just copy & modification of above
+	case opt == OPT_WRITEDATA:
+	 	curl.writeData = &param
+		return nil
 	case opt == OPT_WRITEFUNCTION:
 		fun := param.(func([]byte, uintptr, interface{}) uintptr)
 		curl.writeFunction = fun
 
-		ptr := C.return_sample_callback(unsafe.Pointer(reflect.ValueOf(fun).Pointer()))
-		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr))
+		ptr := C.return_write_function()
+		if err := newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr)); err == nil {
+			return newCurlError(C.curl_easy_setopt_pointer(p, OPT_WRITEDATA,
+				unsafe.Pointer(reflect.ValueOf(curl).Pointer())))
+		} else {
+			return err
+		}
 
 	case opt > C.CURLOPTTYPE_OFF_T:
 		// here we should use uint64

@@ -34,33 +34,3 @@ size_t write_function( char *ptr, size_t size, size_t nmemb, void *ctx) {
 void *return_write_function() {
     return (void *)&write_function;
 }
-
-
-
-size_t writefunction_static_func( char *ptr, size_t size, size_t nmemb, void *userdata) {
-        /* use static variable to save values */
-    static void *func = NULL;
-    static int called_flag = 0;
-    size_t ret = 0;
-
-    if (ptr == NULL) {
-            /* set callback */
-        func = userdata;
-        called_flag = 1;
-    } else {
-        if (called_flag == 0) {
-                /* not setted */
-            return 0;
-        } else {
-            ret = callWriteFunctionCallback(func, ptr, size*nmemb, *((GoInterface *)userdata));
-            called_flag += 1;
-        }
-    }
-    return ret;
-}
-
-void *return_sample_callback(void *go_func_pointer)
-{
-    writefunction_static_func(NULL, 0, 0, go_func_pointer);
-    return &writefunction_static_func;
-}

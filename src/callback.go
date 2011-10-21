@@ -25,7 +25,12 @@ func getCurlField(p uintptr, cname *C.char) uintptr {
 		return reflect.ValueOf(curl.progressFuncion).Pointer()
 	case "headerData":
 		return uintptr(unsafe.Pointer(curl.headerData))
+	case "writeData":
+		return uintptr(unsafe.Pointer(curl.writeData))
+	case "readData":
+		return uintptr(unsafe.Pointer(curl.readData))
 	}
+
 	println("WARNING: field not found: ", name)
 	return 0
 }
