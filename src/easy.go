@@ -131,6 +131,8 @@ func callWriteFunctionCallback(
 func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	p := curl.handle
 	switch {
+	case opt == OPT_READDATA:
+		panic("read data not implemented yet!")
 	case opt == OPT_READFUNCTION:
 		panic("readfunction not implemented yet!")
 	case opt == OPT_HEADERDATA:

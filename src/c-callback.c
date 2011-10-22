@@ -34,3 +34,5 @@ size_t write_function( char *ptr, size_t size, size_t nmemb, void *ctx) {
 void *return_write_function() {
     return (void *)&write_function;
 }
+
+/* for OPT_READFUNCTION */
