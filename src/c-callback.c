@@ -36,3 +36,21 @@ void *return_write_function() {
 }
 
 /* for OPT_READFUNCTION */
+/* TODO */
+
+/* for OPT_PROGRESSFUNCTION */
+int progress_function(void *ctx, double dltotal, double dlnow, double ultotal, double ulnow) {
+    void *go_progress_func = (void *)getCurlField((uintptr)ctx, "progressFuncion");
+    GoInterface *clientp = (GoInterface *)getCurlField((uintptr)ctx, "progressData");
+
+    if (clientp == NULL) {
+        return callProcessCallback(go_progress_func, nilInterface(),
+                                   dltotal, dlnow, ultotal, ulnow);
+    }
+    return callProcessCallback(go_progress_func, *clientp,
+                                   dltotal, dlnow, ultotal, ulnow);
+}
+
+void *return_progress_function() {
+    return (void *)progress_function;
+}

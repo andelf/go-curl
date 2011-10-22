@@ -91,7 +91,7 @@ type CURL struct {
 	handle unsafe.Pointer
 	progressFuncion func(interface{}, float64, float64, float64, float64) int
 	headerFunction, writeFunction, readFunction func([]byte, uintptr, interface{}) uintptr
-	headerData, writeData, readData *interface{}
+	headerData, writeData, readData, processData *interface{}
 }
 
 func EasyInit() *CURL {
@@ -127,6 +127,18 @@ func callWriteFunctionCallback(
 	return ret
 }
 
+//export callProcessCallback
+func callProcessCallback(
+	f func(interface{}, float64, float64, float64, float64) int,
+	clientp interface{},
+	dltotal, dlnow, ultotal, ulnow C.double) int {
+
+	// fdltotal, fdlnow, fultotal, fulnow
+	ret := f(clientp, float64(dltotal), float64(dlnow), float64(ultotal), float64(ulnow))
+	return ret
+}
+
+
 // WARNING: why ? function pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
 func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	p := curl.handle
@@ -135,6 +147,22 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 		panic("read data not implemented yet!")
 	case opt == OPT_READFUNCTION:
 		panic("readfunction not implemented yet!")
+
+	case opt == OPT_PROGRESSDATA:
+		curl.processData = &param
+		return nil
+	case opt == OPT_PROGRESSFUNCTION:
+		fun := param.(func(interface{}, float64, float64, float64, float64) int)
+		curl.progressFuncion = fun
+
+		ptr := C.return_progress_function()
+		if err := newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr)); err == nil {
+			return newCurlError(C.curl_easy_setopt_pointer(p, OPT_PROGRESSDATA,
+				unsafe.Pointer(reflect.ValueOf(curl).Pointer())))
+		} else {
+			return err
+		}
+
 	case opt == OPT_HEADERDATA:
 		curl.headerData = &param
 		return nil
