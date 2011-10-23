@@ -3,7 +3,6 @@ package main
 
 import (
 	"../src/_obj/curl"
-	"time"
 	"fmt"
 )
 
@@ -30,6 +29,9 @@ func main() {
 
 	easy.Setopt(curl.OPT_PROGRESSFUNCTION, func (_ interface{}, dltotal float64, dlnow float64, ultotal float64, ulnow float64) int {
 		fmt.Printf("Download %.2f, Uploading %.2f\r", dlnow/dltotal, ulnow/ultotal)
+		if dlnow/dltotal > 0.05 {
+			return 1			// abort
+		}
 		return 0
 	})
 
