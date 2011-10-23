@@ -36,19 +36,32 @@ void *return_write_function() {
 }
 
 /* for OPT_READFUNCTION */
-/* TODO */
+size_t read_function( char *ptr, size_t size, size_t nmemb, void *ctx) {
+    void *go_read_func = (void *)getCurlField((uintptr)ctx, "readFunction");
+    GoInterface *userdata = (GoInterface *)getCurlField((uintptr)ctx, "readData");
+
+    if (userdata == NULL) {
+        return callReadFunctionCallback(go_read_func, ptr, size*nmemb, nilInterface());
+    }
+    return callReadFunctionCallback(go_read_func, ptr, size*nmemb, *userdata);
+}
+
+void *return_read_function() {
+    return (void *)&read_function;
+}
+
 
 /* for OPT_PROGRESSFUNCTION */
 int progress_function(void *ctx, double dltotal, double dlnow, double ultotal, double ulnow) {
-    void *go_progress_func = (void *)getCurlField((uintptr)ctx, "progressFuncion");
+    void *go_progress_func = (void *)getCurlField((uintptr)ctx, "progressFunction");
     GoInterface *clientp = (GoInterface *)getCurlField((uintptr)ctx, "progressData");
 
     if (clientp == NULL) {
         return callProgressCallback(go_progress_func, nilInterface(),
-                                   dltotal, dlnow, ultotal, ulnow);
+                                    dltotal, dlnow, ultotal, ulnow);
     }
     return callProgressCallback(go_progress_func, *clientp,
-                                   dltotal, dlnow, ultotal, ulnow);
+                                dltotal, dlnow, ultotal, ulnow);
 }
 
 void *return_progress_function() {
