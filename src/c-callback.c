@@ -44,10 +44,10 @@ int progress_function(void *ctx, double dltotal, double dlnow, double ultotal, d
     GoInterface *clientp = (GoInterface *)getCurlField((uintptr)ctx, "progressData");
 
     if (clientp == NULL) {
-        return callProcessCallback(go_progress_func, nilInterface(),
+        return callProgressCallback(go_progress_func, nilInterface(),
                                    dltotal, dlnow, ultotal, ulnow);
     }
-    return callProcessCallback(go_progress_func, *clientp,
+    return callProgressCallback(go_progress_func, *clientp,
                                    dltotal, dlnow, ultotal, ulnow);
 }
 

@@ -127,8 +127,8 @@ func callWriteFunctionCallback(
 	return ret
 }
 
-//export callProcessCallback
-func callProcessCallback(
+//export callProgressCallback
+func callProgressCallback(
 	f func(interface{}, float64, float64, float64, float64) int,
 	clientp interface{},
 	dltotal, dlnow, ultotal, ulnow C.double) int {

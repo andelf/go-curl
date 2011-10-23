@@ -1,13 +1,12 @@
 
-
 include $(GOROOT)/src/Make.inc
 
-CGO_CFLAGS=
-CGO_LDFLAGS=`curl-config --libs`
+CGO_CFLAGS=$(shell curl-config --cflags)
+CGO_LDFLAGS+=$(shell curl-config --libs)
+
 
 TARG=curl
 
-# GOFILES=
 CGOFILES=\
 	core.go \
 	easy.go \
@@ -18,7 +17,7 @@ CGOFILES=\
 
 
 CGO_OFILES=\
-	c-callback.o
+	c-callback.o \
 
 
 include $(GOROOT)/src/Make.pkg

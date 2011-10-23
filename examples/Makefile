@@ -36,4 +36,5 @@ all: $(PROGS)
 
 
 clean::
-	rm -f $(PROGS)
+	rm -fv $(PROGS)
+	rm -fv *.6

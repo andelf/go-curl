@@ -13,11 +13,14 @@ See more examples in ./examples/ directory~!
 Current Status
 --------------
 
- * passed go release.r59 9022 (arch pacman)
- * passed go release.r60 9481 (arch pacman)
- * failed go release.r60.3 9516 (arch pacman, crosscall2: not defined)
- * passed go weekly.2011-10-18 10143 (gcc, hg repo)
- * passed go weekly.2011-10-18 10143 (clang, hg repo)
+ * Linux x64
+   * passed go release.r59 9022 (arch pacman)
+   * passed go release.r60 9481 (arch pacman)
+   * failed go release.r60.3 9516 (arch pacman, crosscall2: not defined)
+   * passed go weekly.2011-10-18 10143 (gcc, hg repo)
+   * passed go weekly.2011-10-18 10143 (clang, hg repo)
+ * Windows
+   * Not tested yet
 
 Sample Program
 --------------
