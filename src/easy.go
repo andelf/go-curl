@@ -108,6 +108,9 @@ func (curl *CURL) Cleanup() {
 // WARNING: why ? function pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
 func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	p := curl.handle
+	if param == nil {
+		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), nil))
+	}
 	switch {
 	case opt == OPT_READDATA:
 		curl.readData = &param
@@ -196,7 +199,6 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 				return newCurlError(C.curl_easy_setopt_slist(p, C.CURLoption(opt), nil))
 			}
 		default:
-			// TODO: handle nil value
 			// It panics if v's Kind is not Chan, Func, Map, Ptr, Slice, or UnsafePointer.
 			// val := reflect.ValueOf(param)
 			//fmt.Printf("DEBUG(Setopt): param=%x\n", val.Pointer())
