@@ -2,7 +2,6 @@ package curl
 
 /*
 #include <stdlib.h>
-#include <string.h>
 #include <curl/curl.h>
 #include "callback.h"
 static CURLcode curl_easy_setopt_long(CURL *handle, CURLoption option, long parameter) {
@@ -18,7 +17,6 @@ static CURLcode curl_easy_setopt_pointer(CURL *handle, CURLoption option, void *
   return curl_easy_setopt(handle, option, parameter);
 }
 
-// get info
 static CURLcode curl_easy_getinfo_string(CURL *curl, CURLINFO info, char **p) {
  return curl_easy_getinfo(curl, info, p);
 }
@@ -31,7 +29,6 @@ static CURLcode curl_easy_getinfo_double(CURL *curl, CURLINFO info, double *p) {
 static CURLcode curl_easy_getinfo_slist(CURL *curl, CURLINFO info, struct curl_slist *p) {
  return curl_easy_getinfo(curl, info, p);
 }
-
 */
 import "C"
 
@@ -83,10 +80,6 @@ func newCurlError(errno C.CURLcode) os.Error {
 	return CurlError(errno)
 }
 
-
-// int (*curl_progress_callback)(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
-// size_t writefunction_static_func( char *ptr, size_t size, size_t nmemb, void *userdata);
-
 // curl_easy interface
 type CURL struct {
 	handle unsafe.Pointer
@@ -111,47 +104,6 @@ func (curl *CURL) Cleanup() {
 	C.curl_easy_cleanup(p)
 }
 
-// export this function to c
-//export callWriteFunctionCallback
-func callWriteFunctionCallback(
-	f func([]byte, uintptr, interface{}) uintptr,
-	ptr *C.char,
-	size C.size_t,
-	userdata interface{}) uintptr {
-	// TODO: avoid C char -> Go sting -> go []Byte
-	buf := []byte(C.GoStringN(ptr, C.int(size)))
-	ret := f(buf, uintptr(size), userdata)
-	return ret
-}
-
-//export callProgressCallback
-func callProgressCallback(
-	f func(interface{}, float64, float64, float64, float64) int,
-	clientp interface{},
-	dltotal, dlnow, ultotal, ulnow C.double) int {
-
-	// fdltotal, fdlnow, fultotal, fulnow
-	ret := f(clientp, float64(dltotal), float64(dlnow), float64(ultotal), float64(ulnow))
-	return ret
-}
-
-//export callReadFunctionCallback
-func callReadFunctionCallback(
-	f func([]byte, uintptr, interface{}) uintptr,
-	ptr *C.char,
-	size C.size_t,
-	userdata interface{}) uintptr {
-	// TODO code cleanup
-	buf := make([]byte, int(size))
-	ret := f(buf, uintptr(size), userdata)
-	str := C.CString(string(buf))
-	defer C.free(unsafe.Pointer(str))
-	if C.memcpy(unsafe.Pointer(ptr), unsafe.Pointer(str), C.size_t(ret)) == nil {
-		panic("read_callback memcpy error!")
-	}
-	return ret
-}
-
 
 // WARNING: why ? function pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
 func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
@@ -171,7 +123,6 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 		} else {
 			return err
 		}
-
 
 	case opt == OPT_PROGRESSDATA:
 		curl.progressData = &param
@@ -229,6 +180,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 		switch t := param.(type) {
 		case string:
 			// FIXME: memory leak, some opt needs we hold a c string till perform()
+			// TODO: We can add a []unsafe.Poionter to Curl struct and do cleanup in Cleanup()
 			ptr := C.CString(t)
 			// defer C.free(unsafe.Pointer(ptr))
 			ret := C.curl_easy_setopt_string(p, C.CURLoption(opt), ptr)
