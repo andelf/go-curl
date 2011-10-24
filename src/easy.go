@@ -109,6 +109,7 @@ func (curl *CURL) Cleanup() {
 func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	p := curl.handle
 	if param == nil {
+		// NOTE: some option will crash program when got a nil param
 		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), nil))
 	}
 	switch {
@@ -228,8 +229,23 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	panic("opt param error!")
 }
 
-// TODO: curl_easy_recv
-// TODO: curl_easy_send
+func (curl *CURL) Send(buffer []byte) (int, os.Error) {
+	p := curl.handle
+	buflen := len(buffer)
+	n := C.size_t(0)
+	ret := C.curl_easy_send(p, unsafe.Pointer(&buffer[0]), C.size_t(buflen), &n)
+	return int(n), newCurlError(ret)
+}
+
+func (curl *CURL) Recv(buffer []byte) (int, os.Error) {
+	p := curl.handle
+	buflen := len(buffer)
+	buf := C.CString(string(buffer))
+	n := C.size_t(0)
+	ret := C.curl_easy_recv(p, unsafe.Pointer(buf), C.size_t(buflen), &n)
+	return copy(buffer, C.GoStringN(buf, C.int(n))), newCurlError(ret)
+
+}
 
 func (curl *CURL) Perform() os.Error {
 	p := curl.handle

@@ -14,7 +14,7 @@
 
 
 PROGS = prog sepheaders channal_callback ftpget progress simple \
-	post-callback
+	post-callback sendrecv
 
 COMPILE.go = 6g
 LINK.go = 6l
