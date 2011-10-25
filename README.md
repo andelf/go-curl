@@ -20,7 +20,7 @@ Current Status
    * passed go weekly.2011-10-18 10143 (gcc, hg repo)
    * passed go weekly.2011-10-18 10143 (clang, hg repo)
  * Windows
-   * Not tested yet
+   * passed go release.r60.3 9516 (win7, i686, mingw-gcc 4.5.2)
 
 Sample Program
 --------------

@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <sys/mman.h>
 #include <string.h>
 #include "callback.h"
 #include "_cgo_export.h"

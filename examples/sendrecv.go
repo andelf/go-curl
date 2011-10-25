@@ -26,10 +26,6 @@ func main() {
 	easy.Setopt(curl.OPT_VERBOSE, true)
 	easy.Setopt(curl.OPT_CONNECT_ONLY, true)
 
-
-
-
-
 	easy.Setopt(curl.OPT_WRITEFUNCTION, nil)
 
 	if err := easy.Perform(); err != nil {
@@ -44,5 +40,5 @@ func main() {
 		println("ERROR:", err.String())
 	}
 	println(string(result))
-
+	println("result length=", len(result))
 }
