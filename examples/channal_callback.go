@@ -26,7 +26,7 @@ func main() {
 	easy := curl.EasyInit()
 	defer easy.Cleanup()
 
-	easy.Setopt(curl.OPT_URL, "http://localhost:8000/")
+	easy.Setopt(curl.OPT_URL, "http://cn.bing.com/")
 
 	easy.Setopt(curl.OPT_WRITEFUNCTION, write_data)
 

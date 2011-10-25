@@ -1,6 +1,7 @@
 package curl
 
 /*
+#cgo linux pkg-config: libcurl
 #include <stdlib.h>
 #include <string.h>
 #include <curl/curl.h>
@@ -52,7 +53,7 @@ func callWriteFunctionCallback(
 	size C.size_t,
 	userdata interface{}) uintptr {
 	// TODO: avoid C char -> Go sting -> go []Byte
-	buf := []byte(C.GoStringN(ptr, C.int(size)))
+	buf := C.GoBytes(unsafe.Pointer(ptr), C.int(size))
 	ret := f(buf, uintptr(size), userdata)
 	return ret
 }

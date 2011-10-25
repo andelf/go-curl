@@ -1,9 +1,9 @@
 
 package curl
 
-/*
-#include <curl/curl.h>
-*/
+
+// #cgo linux pkg-config: libcurl
+// #include <curl/curl.h>
 import "C"
 import (
 	"unsafe"

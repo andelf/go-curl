@@ -3,7 +3,7 @@
 // option const
 package curl
 
-
+// #cgo linux pkg-config: libcurl
 // #include <curl/curl.h>
 import "C"
 

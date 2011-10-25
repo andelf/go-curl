@@ -1,6 +1,7 @@
 package curl
 
 /*
+ #cgo linux pkg-config: libcurl
 #include <stdlib.h>
 #include <curl/curl.h>
 #include "callback.h"

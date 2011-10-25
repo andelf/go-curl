@@ -1,8 +1,6 @@
 
 include $(GOROOT)/src/Make.inc
 
-CGO_CFLAGS=$(shell curl-config --cflags)
-CGO_LDFLAGS+=$(shell curl-config --libs)
 
 
 TARG=curl

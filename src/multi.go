@@ -1,10 +1,10 @@
 package curl
 
 
-/*
-#include <stdlib.h>
-#include <curl/curl.h>
-*/
+
+// #cgo linux pkg-config: libcurl
+// #include <stdlib.h>
+// #include <curl/curl.h>
 import "C"
 import (
 	"unsafe"

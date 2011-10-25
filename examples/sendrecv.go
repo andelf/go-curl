@@ -4,6 +4,7 @@ package main
 import (
 	"../src/_obj/curl"
 	"time"
+	"fmt"
 )
 
 const POST_DATA = "a_test_data_only"
@@ -13,7 +14,7 @@ var sent = false
 func main() {
 	// init the curl session
 
-	result := make([]byte, 1000)
+
 
 
 	easy := curl.EasyInit()
@@ -34,11 +35,15 @@ func main() {
 
 	easy.Send([]byte("HEAD / HTTP/1.0\r\nHost: www.renren.com\r\n\r\n"))
 
-
+	buf := make([]byte, 1000)
 	time.Sleep(1000000000)			// wait gorotine
-	if _, err := easy.Recv(result); err != nil {
+	num, err := easy.Recv(buf)
+	if err != nil {
 		println("ERROR:", err.String())
 	}
-	println(string(result))
-	println("result length=", len(result))
+	println("recv num = ", num)
+	// NOTE: must use buf[:num]
+	println(string(buf[:num]))
+
+	fmt.Printf("got:\n%#v\n", string(buf[:num]))
 }
