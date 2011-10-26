@@ -40,30 +40,6 @@ import (
 	"fmt"
 )
 
-/*
-*/
-// consts
-/*
-const (
-	OPTTYPE_LONG          = 0
-	OPTTYPE_OBJECTPOINT   = 10000
-	OPTTYPE_FUNCTIONPOINT = 20000
-	OPTTYPE_OFF_T         = 30000
-)
-*/
-
-const (
-	PAUSE_RECV      = C.CURLPAUSE_RECV
-	PAUSE_RECV_CONT = C.CURLPAUSE_RECV_CONT
-	PAUSE_SEND      = C.CURLPAUSE_SEND
-	PAUSE_SEND_CONT = C.CURLPAUSE_SEND_CONT
-	PAUSE_ALL       = C.CURLPAUSE_ALL
-	PAUSE_CONT      = C.CURLPAUSE_CONT
-)
-
-// ======================== functions ========
-
-
 
 // all ret code
 type CurlError C.CURLcode
