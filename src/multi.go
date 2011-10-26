@@ -1,10 +1,17 @@
 package curl
 
 
-
-// #cgo linux pkg-config: libcurl
-// #include <stdlib.h>
-// #include <curl/curl.h>
+/*
+#cgo linux pkg-config: libcurl
+#include <stdlib.h>
+#include <curl/curl.h>
+static CURLMcode curl_multi_setopt_long(CURLM *handle, CURLMoption option, long parameter) {
+  return curl_multi_setopt(handle, option, parameter);
+}
+static CURLMcode curl_multi_setopt_pointer(CURLM *handle, CURLMoption option, void *parameter) {
+  return curl_multi_setopt(handle, option, parameter);
+}
+*/
 import "C"
 import (
 	"unsafe"
@@ -72,11 +79,33 @@ func (mcurl *CURLM) Timeout() (int, os.Error) {
 	return int(timeout), err
 }
 
+func (mcurl *CURLM) Setopt(opt int, param interface{}) os.Error {
+	p := mcurl.handle
+	if param == nil {
+		return newCurlMultiError(C.curl_multi_setopt_pointer(p, C.CURLMoption(opt), nil))
+	}
+	switch opt {
+//  currently cannot support these option
+//	case MOPT_SOCKETFUNCTION, MOPT_SOCKETDATA, MOPT_TIMERFUNCTION, MOPT_TIMERDATA:
+//		panic("not supported CURLM.Setopt opt")
+	case MOPT_PIPELINING, MOPT_MAXCONNECTS:
+		val := C.long(0)
+		switch t := param.(type) {
+		case int:
+			val := C.long(t)
+			return newCurlMultiError(C.curl_multi_setopt_long(p, C.CURLMoption(opt), val))
+		case bool:
+			val = C.long(0)
+			if t {
+				val = C.long(1)
+			}
+			return newCurlMultiError(C.curl_multi_setopt_long(p, C.CURLMoption(opt), val))
+		}
+	}
+	panic("not supported CURLM.Setopt opt or param")
+	return nil
+}
 
-// TODO
-/*
- curl_multi_info_read      curl_multi_setopt
- curl_multi_assign                    !curl_multi_socket
- curl_multi_socket_action
- curl_multi_fdset            ?curl_multi_strerror
-*/
+
+
+// TODO curl_multi_info_read

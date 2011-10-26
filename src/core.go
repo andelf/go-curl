@@ -29,12 +29,6 @@ func GlobalInit(flags int) os.Error {
 	return newCurlError(C.curl_global_init(C.long(flags)))
 }
 
-// TODO: curl_global_init_mem
-func GlobalInitMem(args ...interface{}) {
-	panic("curl_global_init_mem not implemented yet!")
-}
-
-
 func GlobalCleanup() {
 	C.curl_global_cleanup()
 }
@@ -119,3 +113,5 @@ func Getdate(date string) *time.Time {
 	}
 	return time.SecondsToUTC(int64(t))
 }
+
+// TODO: curl_global_init_mem
