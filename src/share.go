@@ -4,7 +4,7 @@ package curl
 /*
 #cgo linux pkg-config: libcurl
 #include <curl/curl.h>
-static CURLSHcode curl_share_setopt_int(CURLSH *handle, CURLSHoption option, int parameter) {
+static CURLSHcode curl_share_setopt_long(CURLSH *handle, CURLSHoption option, long parameter) {
   return curl_share_setopt(handle, option, parameter);
 }
 static CURLSHcode curl_share_setopt_pointer(CURLSH *handle, CURLSHoption option, void *parameter) {
@@ -59,7 +59,7 @@ func (shcurl *CURLSH) Setopt(opt int, param interface{}) os.Error {
 //		panic("not supported")
 	case SHOPT_SHARE, SHOPT_UNSHARE:
 		if val, ok := param.(int); ok {
-			return newCurlShareError(C.curl_share_setopt_int(p, C.CURLSHoption(opt), C.int(val)))
+			return newCurlShareError(C.curl_share_setopt_long(p, C.CURLSHoption(opt), C.long(val)))
 		}
 	}
 	panic("not supported CURLSH.Setopt opt or param")
