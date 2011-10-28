@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"reflect"
-	"../src/_obj/curl"
+	"../curl/_obj/curl"
 	"os"
 //	"dump"
 )

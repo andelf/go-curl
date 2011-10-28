@@ -9,6 +9,11 @@ my golang libcurl(curl) binding.
 
 See more examples in ./examples/ directory~!
 
+How to Install
+--------------
+
+	$ goinstall github.com/andelf/go-curl/curl
+
 
 Current Status
 --------------

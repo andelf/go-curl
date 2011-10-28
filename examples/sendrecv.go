@@ -2,7 +2,7 @@
 package main
 
 import (
-	"../src/_obj/curl"
+	"../curl/_obj/curl"
 	"time"
 	"fmt"
 )
@@ -13,9 +13,6 @@ var sent = false
 
 func main() {
 	// init the curl session
-
-
-
 
 	easy := curl.EasyInit()
 	defer easy.Cleanup()

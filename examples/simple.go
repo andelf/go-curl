@@ -2,7 +2,7 @@
 package main
 
 import (
-	"../src/_obj/curl"
+	"../curl/_obj/curl"
 )
 
 
