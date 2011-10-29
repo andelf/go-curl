@@ -1,7 +1,8 @@
+
 package curl
 
 /*
- #cgo linux pkg-config: libcurl
+#cgo linux pkg-config: libcurl
 #include <stdlib.h>
 #include <curl/curl.h>
 #include "callback.h"
@@ -30,6 +31,31 @@ static CURLcode curl_easy_getinfo_double(CURL *curl, CURLINFO info, double *p) {
 static CURLcode curl_easy_getinfo_slist(CURL *curl, CURLINFO info, struct curl_slist *p) {
  return curl_easy_getinfo(curl, info, p);
 }
+
+static CURLFORMcode curl_formadd_name_content_length(
+    struct curl_httppost **httppost, struct curl_httppost **last_post, char *name, char *content, int length) {
+    return curl_formadd(httppost, last_post,
+                        CURLFORM_COPYNAME, name,
+                        CURLFORM_COPYCONTENTS, content,
+                        CURLFORM_CONTENTSLENGTH, length, CURLFORM_END);
+}
+static CURLFORMcode curl_formadd_name_content_length_type(
+    struct curl_httppost **httppost, struct curl_httppost **last_post, char *name, char *content, int length, char *type) {
+    return curl_formadd(httppost, last_post,
+                        CURLFORM_COPYNAME, name,
+                        CURLFORM_COPYCONTENTS, content,
+                        CURLFORM_CONTENTSLENGTH, length,
+                        CURLFORM_CONTENTTYPE, type, CURLFORM_END);
+}
+static CURLFORMcode curl_formadd_name_file_type(
+    struct curl_httppost **httppost, struct curl_httppost **last_post, char *name, char *filename, char *type) {
+    return curl_formadd(httppost, last_post,
+                        CURLFORM_COPYNAME, name,
+                        CURLFORM_FILE, filename,
+                        CURLFORM_CONTENTTYPE, type, CURLFORM_END);
+}
+ // TODO: support multi file
+
 */
 import "C"
 
@@ -38,10 +64,12 @@ import (
 	"reflect"
 	"os"
 	"fmt"
+	"path"
+	"mime"
 )
 
 
-// all ret code
+
 type CurlError C.CURLcode
 
 func (e CurlError) String() string {
@@ -66,23 +94,26 @@ type CURL struct {
 	headerData, writeData, readData, progressData, fnmatchData *interface{}
 }
 
+// curl_easy_init - Start a libcurl easy session
 func EasyInit() *CURL {
 	p := C.curl_easy_init()
 	return &CURL{handle: p}		// other field defaults to nil
 }
 
+// curl_easy_duphandle - Clone a libcurl session handle
 func (curl *CURL) Duphandle() *CURL {
 	p := curl.handle
 	return &CURL{handle: C.curl_easy_duphandle(p)}
 }
 
+// curl_easy_cleanup - End a libcurl easy session
 func (curl *CURL) Cleanup() {
 	p := curl.handle
 	C.curl_easy_cleanup(p)
 }
 
-
-// WARNING: why ? function pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
+// curl_easy_setopt - set options for a curl easy handle
+// WARNING: afunction pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
 func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	p := curl.handle
 	if param == nil {
@@ -150,6 +181,11 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 			return err
 		}
 
+	// for OPT_HTTPPOST, use struc Form
+	case opt == OPT_HTTPPOST:
+		post := param.(* Form)
+		ptr := post.head
+		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), unsafe.Pointer(ptr)))
 	case opt > C.CURLOPTTYPE_OFF_T:
 		// here we should use uint64
 		panic("off_t type not implemented yet!")
@@ -206,6 +242,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	panic("opt param error!")
 }
 
+// curl_easy_send - sends raw data over an "easy" connection
 func (curl *CURL) Send(buffer []byte) (int, os.Error) {
 	p := curl.handle
 	buflen := len(buffer)
@@ -214,6 +251,7 @@ func (curl *CURL) Send(buffer []byte) (int, os.Error) {
 	return int(n), newCurlError(ret)
 }
 
+// curl_easy_recv - receives raw data on an "easy" connection
 func (curl *CURL) Recv(buffer []byte) (int, os.Error) {
 	p := curl.handle
 	buflen := len(buffer)
@@ -224,21 +262,25 @@ func (curl *CURL) Recv(buffer []byte) (int, os.Error) {
 
 }
 
+// curl_easy_perform - Perform a file transfer
 func (curl *CURL) Perform() os.Error {
 	p := curl.handle
 	return newCurlError(C.curl_easy_perform(p))
 }
 
+// curl_easy_pause - pause and unpause a connection
 func (curl *CURL) Pause(bitmask int) os.Error {
 	p := curl.handle
 	return newCurlError(C.curl_easy_pause(p, C.int(bitmask)))
 }
 
+// curl_easy_reset - reset all options of a libcurl session handle
 func (curl *CURL) Reset() {
 	p := curl.handle
 	C.curl_easy_reset(p)
 }
 
+// curl_easy_escape - URL encodes the given string
 func (curl *CURL) Escape(url string) string {
 	p := curl.handle
 	oldUrl := C.CString(url)
@@ -248,6 +290,7 @@ func (curl *CURL) Escape(url string) string {
 	return C.GoString(newUrl)
 }
 
+// curl_easy_unescape - URL decodes the given string
 func (curl *CURL) Unescape(url string) string {
 	p := curl.handle
 	oldUrl := C.CString(url)
@@ -261,47 +304,30 @@ func (curl *CURL) Unescape(url string) string {
 	return C.GoStringN(newUrl, outlength)
 }
 
-/*
- CURLINFO_STRING   0x100000
- CURLINFO_LONG     0x200000
- CURLINFO_DOUBLE   0x300000
- CURLINFO_SLIST    0x400000
- CURLINFO_MASK     0x0fffff
- CURLINFO_TYPEMASK 0xf00000
- */
-
-const (
-	_INFO_STRING = C.CURLINFO_STRING
-	_INFO_LONG = C.CURLINFO_LONG
-	_INFO_DOUBLE = C.CURLINFO_DOUBLE
-	_INFO_SLIST = C.CURLINFO_SLIST
-	_INFO_MASK = C.CURLINFO_MASK
-	_INFO_TYPEMASK = C.CURLINFO_TYPEMASK
-)
-
+// curl_easy_getinfo - extract information from a curl handle
 func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err os.Error) {
 	p := curl.handle
-	switch info & _INFO_TYPEMASK {
-	case _INFO_STRING:
+	switch info & C.CURLINFO_TYPEMASK {
+	case C.CURLINFO_STRING:
 		a_string := C.CString("")
 		defer C.free(unsafe.Pointer(a_string))
 		err := newCurlError(C.curl_easy_getinfo_string(p, info, &a_string));
 		ret := C.GoString(a_string)
 		print("debug (Getinfo) ", ret, "\n")
 		return ret, err
-	case _INFO_LONG:
+	case C.CURLINFO_LONG:
 		a_long := C.long(-1)
 		err := newCurlError(C.curl_easy_getinfo_long(p, info, &a_long));
 		ret := int(a_long)
 		print("debug (Getinfo) ", ret, "\n")
 		return ret, err
-	case _INFO_DOUBLE:
+	case C.CURLINFO_DOUBLE:
 		a_double := C.double(0.0)
 		err := newCurlError(C.curl_easy_getinfo_double(p, info, &a_double));
 		ret := float64(a_double)
 		print("debug (Getinfo) ", ret, "\n")
 		return ret, err
-	case _INFO_SLIST:			// need fix
+	case C.CURLINFO_SLIST:			// need fix
 		a_ptr_slist := new(_Ctype_struct_curl_slist)
 		err := newCurlError(C.curl_easy_getinfo_slist(p, info, a_ptr_slist));
 		ret := []string{}
@@ -316,4 +342,92 @@ func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err os.Error) {
 	}
 	panic("not implemented yet!")
 	return nil, nil
+}
+
+
+
+
+
+// A multipart/formdata HTTP POST form
+type Form struct {
+	head, last *C.struct_curl_httppost
+}
+
+func NewForm() *Form {
+	return &Form{}
+}
+
+func (form *Form) Add(name string, content interface{}) os.Error {
+	head, last := form.head, form.last
+	namestr := C.CString(name)
+	defer C.free(unsafe.Pointer(namestr))
+	var (
+		buffer *C.char
+		length C.int
+	)
+	switch t := content.(type) {
+	case string:
+		buffer = C.CString(t)
+		length = C.int(len(t))
+	case []byte:
+		buffer = C.CString(string(t))
+		length = C.int(len(t))
+	default:
+		panic("not implemented")
+	}
+	defer C.free(unsafe.Pointer(buffer))
+	C.curl_formadd_name_content_length(&head, &last, namestr, buffer, length)
+	form.head, form.last = head, last
+	return nil
+}
+
+func (form *Form) AddWithType(name string, content interface{}, content_type string) os.Error {
+	head, last := form.head, form.last
+	namestr := C.CString(name)
+	typestr := C.CString(content_type)
+	defer C.free(unsafe.Pointer(namestr))
+	defer C.free(unsafe.Pointer(typestr))
+	var (
+		buffer *C.char
+		length C.int
+	)
+	switch t := content.(type) {
+	case string:
+		buffer = C.CString(t)
+		length = C.int(len(t))
+	case []byte:
+		buffer = C.CString(string(t))
+		length = C.int(len(t))
+	default:
+		panic("not implemented")
+	}
+	defer C.free(unsafe.Pointer(buffer))
+	C.curl_formadd_name_content_length_type(&head, &last, namestr, buffer, length, typestr)
+	form.head, form.last = head, last
+	return nil
+}
+
+func (form *Form) AddFile(name, filename string) os.Error {
+	head, last := form.head, form.last
+	namestr := C.CString(name)
+	pathstr := C.CString(filename)
+	typestr := C.CString(guessType(filename))
+	defer C.free(unsafe.Pointer(namestr))
+	defer C.free(unsafe.Pointer(pathstr))
+	defer C.free(unsafe.Pointer(typestr))
+	C.curl_formadd_name_file_type(&head, &last, namestr, pathstr, typestr)
+	form.head, form.last = head, last
+	return nil
+}
+
+func (form *Form) AddFromFile(name, filename string) {
+}
+
+func guessType(filename string) string {
+	ext := path.Ext(filename)
+	file_type := mime.TypeByExtension(ext)
+	if file_type == "" {
+		return "application/octet-stream"
+	}
+	return file_type
 }

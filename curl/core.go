@@ -1,3 +1,6 @@
+
+
+// libcurl go bingding
 package curl
 
 /*
@@ -16,19 +19,12 @@ import (
 	"os"
 )
 
-const (
-	GLOBAL_SSL = C.CURL_GLOBAL_SSL
-	GLOBAL_WIN32 = C.CURL_GLOBAL_WIN32
-	GLOBAL_ALL = C.CURL_GLOBAL_ALL
-	GLOBAL_NOTHING = C.CURL_GLOBAL_NOTHING
-	GLOBAL_DEFAULT = C.CURL_GLOBAL_DEFAULT
-)
-
-
+// curl_global_init - Global libcurl initialisation
 func GlobalInit(flags int) os.Error {
 	return newCurlError(C.curl_global_init(C.long(flags)))
 }
 
+// curl_global_cleanup - global libcurl cleanup
 func GlobalCleanup() {
 	C.curl_global_cleanup()
 }
@@ -63,12 +59,12 @@ const (
 	VERSION_NOW    = C.CURLVERSION_NOW
 )
 
-
+// curl_version - returns the libcurl version string
 func Version() string {
 	return C.GoString(C.curl_version())
 }
 
-// curl_version_info ok
+// curl_version_info - returns run-time libcurl version info
 func VersionInfo(ver C.CURLversion) *VersionInfoData {
 	data := C.curl_version_info(ver)
 	ret := new(VersionInfoData)
@@ -103,7 +99,8 @@ func VersionInfo(ver C.CURLversion) *VersionInfoData {
 	return ret
 }
 
-
+// curl_getdate - Convert a date string to number of seconds since January 1, 1970
+// In golang, we convert it to a *time.Time
 func Getdate(date string) *time.Time {
 	datestr := C.CString(date)
 	defer C.free(unsafe.Pointer(datestr))
@@ -113,5 +110,17 @@ func Getdate(date string) *time.Time {
 	}
 	return time.SecondsToUTC(int64(t))
 }
+
+/*
+// curl_getenv - return value for environment name
+func Getenv(name string) string {
+	namestr := C.CString(name)
+	defer C.free(unsafe.Pointer(namestr))
+	ret := C.curl_getenv(unsafe.Pointer(namestr))
+	defer C.free(unsafe.Pointer(ret))
+
+	return C.GoString(ret)
+}
+*/
 
 // TODO: curl_global_init_mem

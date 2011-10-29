@@ -52,7 +52,6 @@ func callWriteFunctionCallback(
 	ptr *C.char,
 	size C.size_t,
 	userdata interface{}) uintptr {
-	// TODO: avoid C char -> Go sting -> go []Byte
 	buf := C.GoBytes(unsafe.Pointer(ptr), C.int(size))
 	ret := f(buf, uintptr(size), userdata)
 	return ret
@@ -63,7 +62,6 @@ func callProgressCallback(
 	f func(interface{}, float64, float64, float64, float64) int,
 	clientp interface{},
 	dltotal, dlnow, ultotal, ulnow C.double) int {
-
 	// fdltotal, fdlnow, fultotal, fulnow
 	ret := f(clientp, float64(dltotal), float64(dlnow), float64(ultotal), float64(ulnow))
 	return ret
@@ -76,7 +74,7 @@ func callReadFunctionCallback(
 	size C.size_t,
 	userdata interface{}) uintptr {
 	// TODO code cleanup
-	buf := make([]byte, int(size))
+	buf := C.GoBytes(unsafe.Pointer(ptr), C.int(size))
 	ret := f(buf, uintptr(size), userdata)
 	str := C.CString(string(buf))
 	defer C.free(unsafe.Pointer(str))

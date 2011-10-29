@@ -1,11 +1,18 @@
 
-// error const
-// option const
 package curl
 
 // #cgo linux pkg-config: libcurl
 // #include <curl/curl.h>
 import "C"
+
+// for GlobalInit()
+const (
+	GLOBAL_SSL = C.CURL_GLOBAL_SSL
+	GLOBAL_WIN32 = C.CURL_GLOBAL_WIN32
+	GLOBAL_ALL = C.CURL_GLOBAL_ALL
+	GLOBAL_NOTHING = C.CURL_GLOBAL_NOTHING
+	GLOBAL_DEFAULT = C.CURL_GLOBAL_DEFAULT
+)
 
 // global const
 const OK = 0
@@ -415,7 +422,14 @@ const (
 	READFUNC_PAUSE = C.CURL_READFUNC_PAUSE
 )
 
-// Pause(int bitmask)
+// OPT_HTTP_VERSION, passed flag
+const (
+	HTTP_VERSION_NONE = C.CURL_HTTP_VERSION_NONE
+	HTTP_VERSION_1_0 = C.CURL_HTTP_VERSION_1_0
+	HTTP_VERSION_1_1 = C.CURL_HTTP_VERSION_1_1
+)
+
+// for .Pause()
 const (
 	PAUSE_RECV      = C.CURLPAUSE_RECV
 	PAUSE_RECV_CONT = C.CURLPAUSE_RECV_CONT

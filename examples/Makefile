@@ -14,7 +14,7 @@
 
 
 PROGS = prog sepheaders channal_callback ftpget progress simple \
-	post-callback sendrecv
+	post-callback sendrecv renren_login renren_upload
 
 ifeq ($(GOARCH), 386)
 COMPILE.go = 8g

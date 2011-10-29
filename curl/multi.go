@@ -1,6 +1,5 @@
 package curl
 
-
 /*
 #cgo linux pkg-config: libcurl
 #include <stdlib.h>
