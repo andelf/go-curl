@@ -4,7 +4,6 @@ package main
 
 import (
 	"../curl/_obj/curl"
-	"time"
 )
 
 const POST_DATA = "a_test_data_only"
@@ -28,13 +27,9 @@ func main() {
 	easy.Setopt(curl.OPT_HTTPHEADER, []string{"Expect:"})
 
 	// easy.Setopt(curl.OPT_HTTPPOST, form)
-	println("DEBUG::::", easy.Escape("登录"))
 	easy.Setopt(curl.OPT_POSTFIELDS, "email=你的邮箱&password=你的密码&login=" + easy.Escape("登录"))
 
 	if err := easy.Perform(); err != nil {
 		println("ERROR: ", err.String(), err)
 	}
-
-	time.Sleep(1000000000)			// wait gorotine
-
 }

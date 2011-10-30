@@ -21,12 +21,12 @@ func main() {
 	easy.Setopt(curl.OPT_VERBOSE, true)
 
 	easy.Setopt(curl.OPT_READFUNCTION,
-		func (ptr []byte, size uintptr, userdata interface{}) uintptr {
+		func (ptr []byte, userdata interface{}) int {
 		// WARNING: never use append()
 		if ! sent {
 			sent = true
 			ret := copy(ptr, POST_DATA)
-			return uintptr(ret)
+			return ret
 		}
 		return 0				// sent ok
 	})

@@ -11,15 +11,14 @@ const (
 	bodyfilename = "body.out"
 )
 
-func write_data(ptr []byte, size uintptr, userdata interface{}) uintptr {
+func write_data(ptr []byte, userdata interface{}) bool {
 	//println("DEBUG(write_data): ", userdata)
 	//println("DEBUG", userdata.(interface{}))
 	fp := userdata.(* os.File)
-	if writed, err := fp.Write(ptr); err == nil {
-		return uintptr(writed)
+	if _, err := fp.Write(ptr); err == nil {
+		return true
 	}
-
-	return 0
+	return false
 }
 
 

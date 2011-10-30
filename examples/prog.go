@@ -46,12 +46,12 @@ func main() {
 
 	// currently not finished!
 	//
-	fooTest := func (buf []byte, size uintptr, userdata interface{}) uintptr {
+	fooTest := func (buf []byte, userdata interface{}) bool {
 		// buf := ptr.([]byte)
 		println("size=>", len(buf))
-		println("DEBUG(in callback)", buf, size, userdata)
+		println("DEBUG(in callback)", buf, userdata)
 		println("data = >", string(buf))
-		return size
+		return true
 	}
 
 	ret.Setopt(curl.OPT_WRITEFUNCTION, fooTest) // curl.CallbackWriteFunction(fooTest))

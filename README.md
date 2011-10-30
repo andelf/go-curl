@@ -15,6 +15,7 @@ Current Development Statue
  * a Multipart Form supports file uploading
  * Most curl_easy_setopt option
  * partly implement share & multi interface
+ * new callback function prototype
 
 How to Install
 --------------
@@ -45,27 +46,21 @@ Sample Program
     )
 
     func main() {
-        ret := curl.EasyInit()
-        defer ret.Cleanup()
+        easy := curl.EasyInit()
+        defer easy.Cleanup()
 
-        if ret.Setopt(curl.OPT_URL, "http://www.baidu.com/") != nil {
-            println("set url ok!")
-        }
-
-        println("set resolve =>", ret.Setopt(curl.OPT_RESOLVE, []string{"www.baidu.com:80:127.0.0.1",}) == nil)
+        easy.Setopt(curl.OPT_URL, "http://www.baidu.com/")
 
         // make a callback function
-        fooTest := func (buf []byte, size uintptr, userdata interface{}) uintptr {
-            // NOTE: here size == len(buf)
+        fooTest := func (buf []byte, userdata interface{}) bool {
             println("DEBUG: size=>", len(buf))
-            println("DEBUG: params:", buf, size, userdata)
-            println("DEBUG: =>", string(buf))
-            return size				// must return size of byte
+            println("DEBUG: content=>", string(buf))
+            return true
         }
 
-        ret.Setopt(curl.OPT_WRITEFUNCTION, fooTest)
+        easy.Setopt(curl.OPT_WRITEFUNCTION, fooTest)
 
-        if err := ret.Perform(); err != nil {
-            fmt.Printf("error code -> %v\n", err)
+        if err := easy.Perform(); err != nil {
+            fmt.Printf("ERROR: %v\n", err)
         }
     }

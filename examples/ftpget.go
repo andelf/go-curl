@@ -18,10 +18,12 @@ func main() {
 	easy.Setopt(curl.OPT_URL, "ftp://ftp.gnu.org/README")
 
 	// define our callback use lambda function
-	easy.Setopt(curl.OPT_WRITEFUNCTION, func (ptr []byte, size uintptr, userdata interface{}) uintptr {
+	easy.Setopt(curl.OPT_WRITEFUNCTION, func (ptr []byte, userdata interface{}) bool {
 		file := userdata.(* os.File)
-		file.Write(ptr)
-		return size
+		if _, err := file.Write(ptr); err != nil {
+			return false
+		}
+		return true
 	})
 
 	fp, _ := os.OpenFile(filename, os.O_WRONLY | os.O_APPEND | os.O_CREATE, 0777)

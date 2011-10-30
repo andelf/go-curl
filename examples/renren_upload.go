@@ -20,9 +20,9 @@ func getUploadUrl() string {
 	easy.Setopt(curl.OPT_COOKIEFILE, "./cookie.jar")
 	easy.Setopt(curl.OPT_COOKIEJAR, "./cookie.jar")
 	easy.Setopt(curl.OPT_VERBOSE, true)
-	easy.Setopt(curl.OPT_WRITEFUNCTION, func(ptr []byte, size uintptr, _ interface{}) uintptr {
+	easy.Setopt(curl.OPT_WRITEFUNCTION, func(ptr []byte, _ interface{}) bool {
 		page += string(ptr)
-		return size
+		return true
 	})
 	easy.Perform()
 	// extract url from
@@ -57,18 +57,18 @@ func main() {
 	easy.Setopt(curl.OPT_HTTPHEADER, []string{"Expect:"})
 
 	form := curl.NewForm()
-	form.Add("albumid", "452618633")
-	form.AddFile("theFile", "path_to_your_img.jpg")
-	form.Add("description", "我就尝试下这段代码靠谱不。。最后一张")
+	form.Add("albumid", "452618633") // your album id
+	form.AddFile("theFile", "/path/to/your/image.jpg")
+	form.Add("description", "我就尝试下这段代码靠谱不。。截图下看看")
 	form.Add("post", "上传照片")
 
 	easy.Setopt(curl.OPT_HTTPPOST, form)
 
 	// print upload progress
 	easy.Setopt(curl.OPT_NOPROGRESS, false)
-	easy.Setopt(curl.OPT_PROGRESSFUNCTION, func (_ interface{}, dltotal float64, dlnow float64, ultotal float64, ulnow float64) int {
+	easy.Setopt(curl.OPT_PROGRESSFUNCTION, func (dltotal, dlnow, ultotal, ulnow float64, _ interface{}) bool {
 		fmt.Printf("Download %3.2f%%, Uploading %3.2f%%\r", dlnow/dltotal * 100, ulnow/ultotal * 100)
-		return 0
+		return true
 	})
 
 	if err := easy.Perform(); err != nil {

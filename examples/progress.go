@@ -1,18 +1,18 @@
 
+// A sample program to show how to use PROGRESS callback to calculate
+// downloading percentage and speed
 package main
 
 import (
 	"../curl/_obj/curl"
 	"fmt"
+	"time"
 )
 
-
-func write_data(ptr []byte, size uintptr, userdata interface{}) uintptr {
-	// silent
-	return size
+func write_data(ptr []byte, userdata interface{}) bool {
+	// make it ok, do nothing
+	return true
 }
-
-
 
 func main() {
 	curl.GlobalInit(curl.GLOBAL_ALL)
@@ -27,13 +27,19 @@ func main() {
 
 	easy.Setopt(curl.OPT_NOPROGRESS, false)
 
-	easy.Setopt(curl.OPT_PROGRESSFUNCTION, func (_ interface{}, dltotal float64, dlnow float64, ultotal float64, ulnow float64) int {
-		fmt.Printf("Download %.2f, Uploading %.2f\r", dlnow/dltotal, ulnow/ultotal)
-		if dlnow/dltotal > 0.05 {
+	started := int64(0)
+	easy.Setopt(curl.OPT_PROGRESSFUNCTION, func (dltotal, dlnow, ultotal, ulnow float64, userdata interface{}) bool {
+		// canceled when 50% finished
+		if dlnow/dltotal > 0.5 {
 			println("")
-			return 1			// abort
+			// abort downloading
+			return false
 		}
-		return 0
+		if started == 0 {
+			started = time.Seconds()
+		}
+		fmt.Printf("Downloaded: %3.2f%%, Speed: %.1fKiB/s \r", dlnow/dltotal * 100, dlnow / 1000 / float64((time.Seconds()-started)))
+		return true
 	})
 
 	if err := easy.Perform(); err != nil {

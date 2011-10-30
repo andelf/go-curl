@@ -48,38 +48,45 @@ func nilInterface() interface{}{
 // callback functions
 //export callWriteFunctionCallback
 func callWriteFunctionCallback(
-	f func([]byte, uintptr, interface{}) uintptr,
+	f func([]byte, interface{}) bool,
 	ptr *C.char,
 	size C.size_t,
 	userdata interface{}) uintptr {
 	buf := C.GoBytes(unsafe.Pointer(ptr), C.int(size))
-	ret := f(buf, uintptr(size), userdata)
-	return ret
+	ok := f(buf, userdata)
+	if ok {
+		return uintptr(size)
+	}
+	return uintptr(C.CURL_MAX_WRITE_SIZE + 1)
 }
 
 //export callProgressCallback
 func callProgressCallback(
-	f func(interface{}, float64, float64, float64, float64) int,
-	clientp interface{},
+	f func(float64, float64, float64, float64, interface{}) bool,
+	userdata interface{},
 	dltotal, dlnow, ultotal, ulnow C.double) int {
 	// fdltotal, fdlnow, fultotal, fulnow
-	ret := f(clientp, float64(dltotal), float64(dlnow), float64(ultotal), float64(ulnow))
-	return ret
+	ok := f(float64(dltotal), float64(dlnow), float64(ultotal), float64(ulnow), userdata)
+	// non-zero va lue will cause libcurl to abort the transfer and return Error
+	if ok {
+		return 0
+	}
+	return 1
 }
 
 //export callReadFunctionCallback
 func callReadFunctionCallback(
-	f func([]byte, uintptr, interface{}) uintptr,
+	f func([]byte, interface{}) int,
 	ptr *C.char,
 	size C.size_t,
 	userdata interface{}) uintptr {
 	// TODO code cleanup
 	buf := C.GoBytes(unsafe.Pointer(ptr), C.int(size))
-	ret := f(buf, uintptr(size), userdata)
+	ret := f(buf, userdata)
 	str := C.CString(string(buf))
 	defer C.free(unsafe.Pointer(str))
 	if C.memcpy(unsafe.Pointer(ptr), unsafe.Pointer(str), C.size_t(ret)) == nil {
 		panic("read_callback memcpy error!")
 	}
-	return ret
+	return uintptr(ret)
 }

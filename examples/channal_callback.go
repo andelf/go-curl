@@ -6,16 +6,16 @@ import (
 	"time"
 )
 
-func write_data(ptr []byte, size uintptr, userdata interface{}) uintptr {
+func write_data(ptr []byte, userdata interface{}) bool {
 	ch, ok := userdata.(chan string)
 	if ok {
 		ch <- string(ptr)
-		return size
+		return true				// ok
 	} else {
 		println("ERROR!")
-		return 0
+		return false
 	}
-	return 0
+	return false
 }
 
 

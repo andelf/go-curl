@@ -88,9 +88,12 @@ func newCurlError(errno C.CURLcode) os.Error {
 // curl_easy interface
 type CURL struct {
 	handle unsafe.Pointer
-	headerFunction, writeFunction, readFunction func([]byte, uintptr, interface{}) uintptr
-	progressFunction func(interface{}, float64, float64, float64, float64) int
-	fnmatchFunction func(interface{}, string, string) int
+	// callback functions, bool ret means ok or not
+	headerFunction, writeFunction func([]byte, interface{}) bool
+	readFunction func([]byte, interface{}) int // return num of bytes writed to buf
+	progressFunction func(float64, float64, float64, float64, interface{}) bool
+	fnmatchFunction func(string, string, interface{}) int
+	// callback datas
 	headerData, writeData, readData, progressData, fnmatchData *interface{}
 }
 
@@ -125,7 +128,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 		curl.readData = &param
 		return nil
 	case opt == OPT_READFUNCTION:
-		fun := param.(func([]byte, uintptr, interface{}) uintptr)
+		fun := param.(func([]byte, interface{}) int)
 		curl.readFunction = fun
 
 		ptr := C.return_read_function()
@@ -140,7 +143,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 		curl.progressData = &param
 		return nil
 	case opt == OPT_PROGRESSFUNCTION:
-		fun := param.(func(interface{}, float64, float64, float64, float64) int)
+		fun := param.(func(float64, float64, float64, float64, interface{}) bool)
 		curl.progressFunction = fun
 
 		ptr := C.return_progress_function()
@@ -155,7 +158,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 		curl.headerData = &param
 		return nil
 	case opt == OPT_HEADERFUNCTION:
-		fun := param.(func([]byte, uintptr, interface{}) uintptr)
+		fun := param.(func([]byte, interface{}) bool)
 		curl.headerFunction = fun
 
 		ptr := C.return_header_function()
@@ -170,7 +173,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	 	curl.writeData = &param
 		return nil
 	case opt == OPT_WRITEFUNCTION:
-		fun := param.(func([]byte, uintptr, interface{}) uintptr)
+		fun := param.(func([]byte, interface{}) bool)
 		curl.writeFunction = fun
 
 		ptr := C.return_write_function()
