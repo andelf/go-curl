@@ -18,6 +18,9 @@ static CURLcode curl_easy_setopt_slist(CURL *handle, CURLoption option, struct c
 static CURLcode curl_easy_setopt_pointer(CURL *handle, CURLoption option, void *parameter) {
   return curl_easy_setopt(handle, option, parameter);
 }
+static CURLcode curl_easy_setopt_off_t(CURL *handle, CURLoption option, off_t parameter) {
+  return curl_easy_setopt(handle, option, parameter);
+}
 
 static CURLcode curl_easy_getinfo_string(CURL *curl, CURLINFO info, char **p) {
  return curl_easy_getinfo(curl, info, p);
@@ -124,9 +127,20 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), nil))
 	}
 	switch {
-	case opt == OPT_READDATA:
+	// not really set
+	case opt == OPT_READDATA:	// OPT_INFILE
 		curl.readData = &param
 		return nil
+	case opt == OPT_PROGRESSDATA:
+		curl.progressData = &param
+		return nil
+	case opt == OPT_HEADERDATA:	// also known as OPT_WRITEHEADER
+		curl.headerData = &param
+		return nil
+	case opt == OPT_WRITEDATA:	// OPT_FILE
+	 	curl.writeData = &param
+		return nil
+
 	case opt == OPT_READFUNCTION:
 		fun := param.(func([]byte, interface{}) int)
 		curl.readFunction = fun
@@ -139,9 +153,6 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 			return err
 		}
 
-	case opt == OPT_PROGRESSDATA:
-		curl.progressData = &param
-		return nil
 	case opt == OPT_PROGRESSFUNCTION:
 		fun := param.(func(float64, float64, float64, float64, interface{}) bool)
 		curl.progressFunction = fun
@@ -154,9 +165,6 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 			return err
 		}
 
-	case opt == OPT_HEADERDATA:	// also known as OPT_WRITEHEADER
-		curl.headerData = &param
-		return nil
 	case opt == OPT_HEADERFUNCTION:
 		fun := param.(func([]byte, interface{}) bool)
 		curl.headerFunction = fun
@@ -168,10 +176,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 		} else {
 			return err
 		}
-	// just copy & modification of above
-	case opt == OPT_WRITEDATA:
-	 	curl.writeData = &param
-		return nil
+
 	case opt == OPT_WRITEFUNCTION:
 		fun := param.(func([]byte, interface{}) bool)
 		curl.writeFunction = fun
@@ -184,14 +189,24 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 			return err
 		}
 
-	// for OPT_HTTPPOST, use struc Form
+	// for OPT_HTTPPOST, use struct Form
 	case opt == OPT_HTTPPOST:
 		post := param.(* Form)
 		ptr := post.head
 		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), unsafe.Pointer(ptr)))
+
 	case opt > C.CURLOPTTYPE_OFF_T:
-		// here we should use uint64
-		panic("off_t type not implemented yet!")
+		val := C.off_t(0)
+		switch t := param.(type) {
+		case int:
+			val = C.off_t(t)
+		case uint64:
+			val = C.off_t(t)
+		default:
+			panic("not supported OFF_T converstion")
+		}
+		return newCurlError(C.curl_easy_setopt_off_t(p, C.CURLoption(opt), val))
+
 	case opt > C.CURLOPTTYPE_FUNCTIONPOINT:
 		// function pointer
 		panic("function poionter not implemented yet!")
@@ -203,8 +218,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 			// TODO: We can add a []unsafe.Poionter to Curl struct and do cleanup in Cleanup()
 			ptr := C.CString(t)
 			// defer C.free(unsafe.Pointer(ptr))
-			ret := C.curl_easy_setopt_string(p, C.CURLoption(opt), ptr)
-			return newCurlError(ret)
+			return newCurlError(C.curl_easy_setopt_string(p, C.CURLoption(opt), ptr))
 		case []string:
 			if len(t) > 0 {
 				a_slist := C.curl_slist_append(nil, C.CString(t[0]))
@@ -225,22 +239,22 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 				unsafe.Pointer(&param)))
 		}
 	case opt > C.CURLOPTTYPE_LONG:
-		// long
+		val := C.long(0)
 		switch t := param.(type) {
 		case int:
-			val := C.long(t)
-			ret := C.curl_easy_setopt_long(p, C.CURLoption(opt), val)
-			return newCurlError(ret)
+			val = C.long(t)
 		case bool:
-			val := 0
 			if t {
 				val = 1
 			}
-			ret := C.curl_easy_setopt_long(p, C.CURLoption(opt), C.long(val))
-			return newCurlError(ret)
+		case int64:
+			val = C.long(t)
+		case int32:
+			val = C.long(t)
 		default:
-			panic("type error in param")
+			panic("not supported converstion to c long")
 		}
+		return newCurlError(C.curl_easy_setopt_long(p, C.CURLoption(opt), val))
 	}
 	panic("opt param error!")
 }
