@@ -50,15 +50,6 @@ type VersionInfoData struct {
 	LibsshVersion string
 }
 
-const (
-	VERSION_FIRST  = C.CURLVERSION_FIRST
-	VERSION_SECOND = C.CURLVERSION_SECOND
-	VERSION_THIRD  = C.CURLVERSION_THIRD
-	VERSION_FOURTH = C.CURLVERSION_FOURTH
-	VERSION_LAST   = C.CURLVERSION_LAST
-	VERSION_NOW    = C.CURLVERSION_NOW
-)
-
 // curl_version - returns the libcurl version string
 func Version() string {
 	return C.GoString(C.curl_version())
