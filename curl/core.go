@@ -1,5 +1,3 @@
-
-
 // libcurl go bingding
 package curl
 
@@ -16,11 +14,10 @@ import "C"
 import (
 	"unsafe"
 	"time"
-	"os"
 )
 
 // curl_global_init - Global libcurl initialisation
-func GlobalInit(flags int) os.Error {
+func GlobalInit(flags int) error {
 	return newCurlError(C.curl_global_init(C.long(flags)))
 }
 

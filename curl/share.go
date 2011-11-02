@@ -1,4 +1,3 @@
-
 package curl
 
 /*
@@ -12,28 +11,23 @@ static CURLSHcode curl_share_setopt_pointer(CURLSH *handle, CURLSHoption option,
 }
 */
 import "C"
-import (
-	"unsafe"
-	"os"
-)
+import "unsafe"
 
 // implement os.Error interface
 type CurlShareError C.CURLMcode
 
-func (e CurlShareError) String() string {
+func (e CurlShareError) Error() string {
 	// ret is const char*, no need to free
 	ret := C.curl_share_strerror(C.CURLSHcode(e))
 	return C.GoString(ret)
 }
 
-
-func newCurlShareError(errno C.CURLSHcode) os.Error {
-	if errno == C.CURLSHE_OK {		// if nothing wrong
+func newCurlShareError(errno C.CURLSHcode) error {
+	if errno == C.CURLSHE_OK { // if nothing wrong
 		return nil
 	}
 	return CurlShareError(errno)
 }
-
 
 type CURLSH struct {
 	handle unsafe.Pointer
@@ -44,19 +38,19 @@ func ShareInit() *CURLSH {
 	return &CURLSH{p}
 }
 
-func (shcurl *CURLSH) Cleanup() os.Error {
+func (shcurl *CURLSH) Cleanup() error {
 	p := shcurl.handle
 	return newCurlShareError(C.curl_share_cleanup(p))
 }
 
-func (shcurl *CURLSH) Setopt(opt int, param interface{}) os.Error {
+func (shcurl *CURLSH) Setopt(opt int, param interface{}) error {
 	p := shcurl.handle
 	if param == nil {
 		return newCurlShareError(C.curl_share_setopt_pointer(p, C.CURLSHoption(opt), nil))
 	}
 	switch opt {
-//	case SHOPT_LOCKFUNC, SHOPT_UNLOCKFUNC, SHOPT_USERDATA:
-//		panic("not supported")
+	//	case SHOPT_LOCKFUNC, SHOPT_UNLOCKFUNC, SHOPT_USERDATA:
+	//		panic("not supported")
 	case SHOPT_SHARE, SHOPT_UNSHARE:
 		if val, ok := param.(int); ok {
 			return newCurlShareError(C.curl_share_setopt_long(p, C.CURLSHoption(opt), C.long(val)))

@@ -1,4 +1,3 @@
-
 package curl
 
 /*
@@ -65,24 +64,21 @@ import "C"
 import (
 	"unsafe"
 	"reflect"
-	"os"
 	"fmt"
 	"path"
 	"mime"
 )
 
-
-
 type CurlError C.CURLcode
 
-func (e CurlError) String() string {
+func (e CurlError) Error() string {
 	// ret is const char*, no need to free
 	ret := C.curl_easy_strerror(C.CURLcode(e))
 	return fmt.Sprintf("curl: %s", C.GoString(ret))
 }
 
-func newCurlError(errno C.CURLcode) os.Error {
-	if errno == C.CURLE_OK {		// if nothing wrong
+func newCurlError(errno C.CURLcode) error {
+	if errno == C.CURLE_OK { // if nothing wrong
 		return nil
 	}
 	return CurlError(errno)
@@ -93,9 +89,9 @@ type CURL struct {
 	handle unsafe.Pointer
 	// callback functions, bool ret means ok or not
 	headerFunction, writeFunction func([]byte, interface{}) bool
-	readFunction func([]byte, interface{}) int // return num of bytes writed to buf
-	progressFunction func(float64, float64, float64, float64, interface{}) bool
-	fnmatchFunction func(string, string, interface{}) int
+	readFunction                  func([]byte, interface{}) int // return num of bytes writed to buf
+	progressFunction              func(float64, float64, float64, float64, interface{}) bool
+	fnmatchFunction               func(string, string, interface{}) int
 	// callback datas
 	headerData, writeData, readData, progressData, fnmatchData *interface{}
 }
@@ -103,7 +99,7 @@ type CURL struct {
 // curl_easy_init - Start a libcurl easy session
 func EasyInit() *CURL {
 	p := C.curl_easy_init()
-	return &CURL{handle: p}		// other field defaults to nil
+	return &CURL{handle: p} // other field defaults to nil
 }
 
 // curl_easy_duphandle - Clone a libcurl session handle
@@ -120,7 +116,7 @@ func (curl *CURL) Cleanup() {
 
 // curl_easy_setopt - set options for a curl easy handle
 // WARNING: afunction pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
-func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
+func (curl *CURL) Setopt(opt int, param interface{}) error {
 	p := curl.handle
 	if param == nil {
 		// NOTE: some option will crash program when got a nil param
@@ -128,17 +124,17 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	}
 	switch {
 	// not really set
-	case opt == OPT_READDATA:	// OPT_INFILE
+	case opt == OPT_READDATA: // OPT_INFILE
 		curl.readData = &param
 		return nil
 	case opt == OPT_PROGRESSDATA:
 		curl.progressData = &param
 		return nil
-	case opt == OPT_HEADERDATA:	// also known as OPT_WRITEHEADER
+	case opt == OPT_HEADERDATA: // also known as OPT_WRITEHEADER
 		curl.headerData = &param
 		return nil
-	case opt == OPT_WRITEDATA:	// OPT_FILE
-	 	curl.writeData = &param
+	case opt == OPT_WRITEDATA: // OPT_FILE
+		curl.writeData = &param
 		return nil
 
 	case opt == OPT_READFUNCTION:
@@ -191,7 +187,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 
 	// for OPT_HTTPPOST, use struct Form
 	case opt == OPT_HTTPPOST:
-		post := param.(* Form)
+		post := param.(*Form)
 		ptr := post.head
 		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), unsafe.Pointer(ptr)))
 
@@ -260,7 +256,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 }
 
 // curl_easy_send - sends raw data over an "easy" connection
-func (curl *CURL) Send(buffer []byte) (int, os.Error) {
+func (curl *CURL) Send(buffer []byte) (int, error) {
 	p := curl.handle
 	buflen := len(buffer)
 	n := C.size_t(0)
@@ -269,7 +265,7 @@ func (curl *CURL) Send(buffer []byte) (int, os.Error) {
 }
 
 // curl_easy_recv - receives raw data on an "easy" connection
-func (curl *CURL) Recv(buffer []byte) (int, os.Error) {
+func (curl *CURL) Recv(buffer []byte) (int, error) {
 	p := curl.handle
 	buflen := len(buffer)
 	buf := C.CString(string(buffer))
@@ -280,13 +276,13 @@ func (curl *CURL) Recv(buffer []byte) (int, os.Error) {
 }
 
 // curl_easy_perform - Perform a file transfer
-func (curl *CURL) Perform() os.Error {
+func (curl *CURL) Perform() error {
 	p := curl.handle
 	return newCurlError(C.curl_easy_perform(p))
 }
 
 // curl_easy_pause - pause and unpause a connection
-func (curl *CURL) Pause(bitmask int) os.Error {
+func (curl *CURL) Pause(bitmask int) error {
 	p := curl.handle
 	return newCurlError(C.curl_easy_pause(p, C.int(bitmask)))
 }
@@ -322,31 +318,31 @@ func (curl *CURL) Unescape(url string) string {
 }
 
 // curl_easy_getinfo - extract information from a curl handle
-func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err os.Error) {
+func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err error) {
 	p := curl.handle
 	switch info & C.CURLINFO_TYPEMASK {
 	case C.CURLINFO_STRING:
 		a_string := C.CString("")
 		defer C.free(unsafe.Pointer(a_string))
-		err := newCurlError(C.curl_easy_getinfo_string(p, info, &a_string));
+		err := newCurlError(C.curl_easy_getinfo_string(p, info, &a_string))
 		ret := C.GoString(a_string)
 		print("debug (Getinfo) ", ret, "\n")
 		return ret, err
 	case C.CURLINFO_LONG:
 		a_long := C.long(-1)
-		err := newCurlError(C.curl_easy_getinfo_long(p, info, &a_long));
+		err := newCurlError(C.curl_easy_getinfo_long(p, info, &a_long))
 		ret := int(a_long)
 		print("debug (Getinfo) ", ret, "\n")
 		return ret, err
 	case C.CURLINFO_DOUBLE:
 		a_double := C.double(0.0)
-		err := newCurlError(C.curl_easy_getinfo_double(p, info, &a_double));
+		err := newCurlError(C.curl_easy_getinfo_double(p, info, &a_double))
 		ret := float64(a_double)
 		print("debug (Getinfo) ", ret, "\n")
 		return ret, err
-	case C.CURLINFO_SLIST:			// need fix
+	case C.CURLINFO_SLIST: // need fix
 		a_ptr_slist := new(_Ctype_struct_curl_slist)
-		err := newCurlError(C.curl_easy_getinfo_slist(p, info, a_ptr_slist));
+		err := newCurlError(C.curl_easy_getinfo_slist(p, info, a_ptr_slist))
 		ret := []string{}
 		for a_ptr_slist != nil {
 			print("!!debug (Getinfo) ", C.GoString(a_ptr_slist.data), a_ptr_slist.next, "\n")
@@ -361,10 +357,6 @@ func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err os.Error) {
 	return nil, nil
 }
 
-
-
-
-
 // A multipart/formdata HTTP POST form
 type Form struct {
 	head, last *C.struct_curl_httppost
@@ -374,7 +366,7 @@ func NewForm() *Form {
 	return &Form{}
 }
 
-func (form *Form) Add(name string, content interface{}) os.Error {
+func (form *Form) Add(name string, content interface{}) error {
 	head, last := form.head, form.last
 	namestr := C.CString(name)
 	defer C.free(unsafe.Pointer(namestr))
@@ -398,7 +390,7 @@ func (form *Form) Add(name string, content interface{}) os.Error {
 	return nil
 }
 
-func (form *Form) AddWithType(name string, content interface{}, content_type string) os.Error {
+func (form *Form) AddWithType(name string, content interface{}, content_type string) error {
 	head, last := form.head, form.last
 	namestr := C.CString(name)
 	typestr := C.CString(content_type)
@@ -424,7 +416,7 @@ func (form *Form) AddWithType(name string, content interface{}, content_type str
 	return nil
 }
 
-func (form *Form) AddFile(name, filename string) os.Error {
+func (form *Form) AddFile(name, filename string) error {
 	head, last := form.head, form.last
 	namestr := C.CString(name)
 	pathstr := C.CString(filename)
