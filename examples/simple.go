@@ -1,10 +1,8 @@
-
 package main
 
 import (
 	"../curl/_obj/curl"
 )
-
 
 func main() {
 	easy := curl.EasyInit()

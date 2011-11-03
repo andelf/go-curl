@@ -5,14 +5,13 @@ import (
 	"reflect"
 	"../curl/_obj/curl"
 	"os"
-//	"dump"
+	//	"dump"
 )
 
 const endl = "\n"
 
-
 func main() {
-	println("DEBUG chdir=>", os.Chdir("/sadf").String())
+	println("DEBUG chdir=>", os.Chdir("/sadf"))
 	ret := curl.EasyInit()
 	defer ret.Cleanup()
 	print("init =>", ret, " ", reflect.TypeOf(ret).String(), endl)
@@ -41,12 +40,12 @@ func main() {
 
 	print("set user_agent =>", ret.Setopt(curl.OPT_USERAGENT, "go-curl v0.0.1") == nil, endl)
 	// add to DNS cache
-	print("set resolve =>", ret.Setopt(curl.OPT_RESOLVE, []string{"www.baidu.com:8000:127.0.0.1",}) == nil, endl)
+	print("set resolve =>", ret.Setopt(curl.OPT_RESOLVE, []string{"www.baidu.com:8000:127.0.0.1"}) == nil, endl)
 	// ret.EasyReset()  clean seted
 
 	// currently not finished!
 	//
-	fooTest := func (buf []byte, userdata interface{}) bool {
+	fooTest := func(buf []byte, userdata interface{}) bool {
 		// buf := ptr.([]byte)
 		println("size=>", len(buf))
 		println("DEBUG(in callback)", buf, userdata)
@@ -59,9 +58,8 @@ func main() {
 	// for test only
 
 	code := ret.Perform()
-//	dump.Dump(code)
+	//	dump.Dump(code)
 	fmt.Printf("code -> %v\n", code)
-
 
 	println("================================")
 	print("pause =>", ret.Pause(curl.PAUSE_ALL), endl)
@@ -87,22 +85,21 @@ func main() {
 	ret.Getinfo(curl.INFO_FILETIME)
 	ret.Getinfo(curl.INFO_SSL_ENGINES)
 
-
 	ret.Getinfo(curl.INFO_TOTAL_TIME)
 
 	println("================================")
 
 	// ret.Getinfo(curl.INFO_SSL_ENGINES)
 
-/*	mret := curl.MultiInit()
-	mret.AddHandle(ret)			// works
-	defer mret.Cleanup()
-	if ok, handles := mret.Perform(); ok == curl.OK {
-		fmt.Printf("ok=%s, handles=%d\n", ok, handles)
-	} else {
-		fmt.Printf("error calling multi\n")
-	}
-*/
+	/*	mret := curl.MultiInit()
+		mret.AddHandle(ret)			// works
+		defer mret.Cleanup()
+		if ok, handles := mret.Perform(); ok == curl.OK {
+			fmt.Printf("ok=%s, handles=%d\n", ok, handles)
+		} else {
+			fmt.Printf("error calling multi\n")
+		}
+	*/
 	println("================================")
 	//println(curl.GlobalInit(curl.GLOBAL_SSL))
 }

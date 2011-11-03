@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -10,14 +9,13 @@ func write_data(ptr []byte, userdata interface{}) bool {
 	ch, ok := userdata.(chan string)
 	if ok {
 		ch <- string(ptr)
-		return true				// ok
+		return true // ok
 	} else {
 		println("ERROR!")
 		return false
 	}
 	return false
 }
-
 
 func main() {
 	curl.GlobalInit(curl.GLOBAL_ALL)
@@ -42,8 +40,8 @@ func main() {
 	easy.Setopt(curl.OPT_WRITEDATA, ch)
 
 	if err := easy.Perform(); err != nil {
-		println("ERROR: ", err.String())
+		println("ERROR: ", err)
 	}
 
-	time.Sleep(10000)			// wait gorotine
+	time.Sleep(10000) // wait gorotine
 }

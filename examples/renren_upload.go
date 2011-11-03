@@ -1,4 +1,3 @@
-
 // 人人网图片上传
 package main
 
@@ -8,7 +7,6 @@ import (
 	"regexp"
 	"fmt"
 )
-
 
 func getUploadUrl() string {
 	page := ""
@@ -34,7 +32,6 @@ func getUploadUrl() string {
 	}
 	return ""
 }
-
 
 func main() {
 	// init the curl session
@@ -66,15 +63,15 @@ func main() {
 
 	// print upload progress
 	easy.Setopt(curl.OPT_NOPROGRESS, false)
-	easy.Setopt(curl.OPT_PROGRESSFUNCTION, func (dltotal, dlnow, ultotal, ulnow float64, _ interface{}) bool {
-		fmt.Printf("Download %3.2f%%, Uploading %3.2f%%\r", dlnow/dltotal * 100, ulnow/ultotal * 100)
+	easy.Setopt(curl.OPT_PROGRESSFUNCTION, func(dltotal, dlnow, ultotal, ulnow float64, _ interface{}) bool {
+		fmt.Printf("Download %3.2f%%, Uploading %3.2f%%\r", dlnow/dltotal*100, ulnow/ultotal*100)
 		return true
 	})
 
 	if err := easy.Perform(); err != nil {
-		println("ERROR: ", err.String(), err)
+		println("ERROR: ", err)
 	}
 
-	time.Sleep(1000000000)			// wait gorotine
+	time.Sleep(1000000000) // wait gorotine
 
 }
