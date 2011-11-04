@@ -25,7 +25,7 @@ func main() {
 	easy.Setopt(curl.OPT_WRITEFUNCTION, nil)
 
 	if err := easy.Perform(); err != nil {
-		println("ERROR: ", err)
+		println("ERROR: ", err.Error())
 	}
 
 	easy.Send([]byte("HEAD / HTTP/1.0\r\nHost: www.renren.com\r\n\r\n"))
@@ -34,7 +34,7 @@ func main() {
 	time.Sleep(1000000000) // wait gorotine
 	num, err := easy.Recv(buf)
 	if err != nil {
-		println("ERROR:", err)
+		println("ERROR:", err.Error())
 	}
 	println("recv num = ", num)
 	// NOTE: must use buf[:num]

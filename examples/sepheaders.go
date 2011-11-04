@@ -43,7 +43,7 @@ func main() {
 	// easy.Setopt(curl.OPT_WRITEHEADER, 0)
 
 	if err := easy.Perform(); err != nil {
-		println("ERROR: ", err)
+		println("ERROR: ", err.Error())
 	}
 
 }

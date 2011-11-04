@@ -42,6 +42,6 @@ func main() {
 	})
 
 	if err := easy.Perform(); err != nil {
-		println("ERROR: ", err)
+		fmt.Printf("ERROR: %v\n", err)
 	}
 }
