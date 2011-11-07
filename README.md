@@ -38,29 +38,31 @@ Current Status
 Sample Program
 --------------
 
-    package main
+```go
+package main
 
-    import (
-        "fmt"
-        "github.com/andelf/go-curl/curl"
-    )
+import (
+    "fmt"
+    "github.com/andelf/go-curl/curl"
+)
 
-    func main() {
-        easy := curl.EasyInit()
-        defer easy.Cleanup()
+func main() {
+    easy := curl.EasyInit()
+    defer easy.Cleanup()
 
-        easy.Setopt(curl.OPT_URL, "http://www.baidu.com/")
+    easy.Setopt(curl.OPT_URL, "http://www.baidu.com/")
 
-        // make a callback function
-        fooTest := func (buf []byte, userdata interface{}) bool {
-            println("DEBUG: size=>", len(buf))
-            println("DEBUG: content=>", string(buf))
-            return true
-        }
-
-        easy.Setopt(curl.OPT_WRITEFUNCTION, fooTest)
-
-        if err := easy.Perform(); err != nil {
-            fmt.Printf("ERROR: %v\n", err)
-        }
+    // make a callback function
+    fooTest := func (buf []byte, userdata interface{}) bool {
+        println("DEBUG: size=>", len(buf))
+        println("DEBUG: content=>", string(buf))
+        return true
     }
+
+    easy.Setopt(curl.OPT_WRITEFUNCTION, fooTest)
+
+    if err := easy.Perform(); err != nil {
+        fmt.Printf("ERROR: %v\n", err)
+    }
+}
+```
