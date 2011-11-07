@@ -1,10 +1,9 @@
-
 package main
 
 import (
 	"../curl/_obj/curl"
-	"time"
 	"fmt"
+	"time"
 )
 
 const POST_DATA = "a_test_data_only"
@@ -19,7 +18,6 @@ func main() {
 
 	easy.Setopt(curl.OPT_URL, "http://www.renren.com")
 
-
 	easy.Setopt(curl.OPT_PORT, 80)
 	easy.Setopt(curl.OPT_VERBOSE, true)
 	easy.Setopt(curl.OPT_CONNECT_ONLY, true)
@@ -33,7 +31,7 @@ func main() {
 	easy.Send([]byte("HEAD / HTTP/1.0\r\nHost: www.renren.com\r\n\r\n"))
 
 	buf := make([]byte, 1000)
-	time.Sleep(1000000000)			// wait gorotine
+	time.Sleep(1000000000) // wait gorotine
 	num, err := easy.Recv(buf)
 	if err != nil {
 		println("ERROR:", err.String())

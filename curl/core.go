@@ -1,5 +1,3 @@
-
-
 // libcurl go bingding
 package curl
 
@@ -14,9 +12,9 @@ static char *string_array_index(char **p, int i) {
 import "C"
 
 import (
-	"unsafe"
-	"time"
 	"os"
+	"time"
+	"unsafe"
 )
 
 // curl_global_init - Global libcurl initialisation

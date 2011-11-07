@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -21,15 +20,15 @@ func main() {
 	easy.Setopt(curl.OPT_VERBOSE, true)
 
 	easy.Setopt(curl.OPT_READFUNCTION,
-		func (ptr []byte, userdata interface{}) int {
-		// WARNING: never use append()
-		if ! sent {
-			sent = true
-			ret := copy(ptr, POST_DATA)
-			return ret
-		}
-		return 0				// sent ok
-	})
+		func(ptr []byte, userdata interface{}) int {
+			// WARNING: never use append()
+			if !sent {
+				sent = true
+				ret := copy(ptr, POST_DATA)
+				return ret
+			}
+			return 0 // sent ok
+		})
 
 	// disable HTTP/1.1 Expect 100
 	easy.Setopt(curl.OPT_HTTPHEADER, []string{"Expect:"})
@@ -40,5 +39,5 @@ func main() {
 		println("ERROR: ", err.String(), err)
 	}
 
-	time.Sleep(10000)			// wait gorotine
+	time.Sleep(10000) // wait gorotine
 }

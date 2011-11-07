@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -10,14 +9,13 @@ func write_data(ptr []byte, userdata interface{}) bool {
 	ch, ok := userdata.(chan string)
 	if ok {
 		ch <- string(ptr)
-		return true				// ok
+		return true // ok
 	} else {
 		println("ERROR!")
 		return false
 	}
 	return false
 }
-
 
 func main() {
 	curl.GlobalInit(curl.GLOBAL_ALL)
@@ -45,5 +43,5 @@ func main() {
 		println("ERROR: ", err.String())
 	}
 
-	time.Sleep(10000)			// wait gorotine
+	time.Sleep(10000) // wait gorotine
 }

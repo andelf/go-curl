@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -8,19 +7,18 @@ import (
 
 const (
 	headerfilename = "head.out"
-	bodyfilename = "body.out"
+	bodyfilename   = "body.out"
 )
 
 func write_data(ptr []byte, userdata interface{}) bool {
 	//println("DEBUG(write_data): ", userdata)
 	//println("DEBUG", userdata.(interface{}))
-	fp := userdata.(* os.File)
+	fp := userdata.(*os.File)
 	if _, err := fp.Write(ptr); err == nil {
 		return true
 	}
 	return false
 }
-
 
 func main() {
 	curl.GlobalInit(curl.GLOBAL_ALL)
@@ -38,7 +36,7 @@ func main() {
 	easy.Setopt(curl.OPT_WRITEFUNCTION, write_data)
 
 	// write file
-	fp, _ := os.OpenFile(bodyfilename, os.O_WRONLY | os.O_APPEND | os.O_CREATE, 0777)
+	fp, _ := os.OpenFile(bodyfilename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0777)
 	defer fp.Close()
 	easy.Setopt(curl.OPT_WRITEDATA, fp)
 

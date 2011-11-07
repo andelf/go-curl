@@ -1,4 +1,3 @@
-
 package curl
 
 /*
@@ -63,15 +62,13 @@ static CURLFORMcode curl_formadd_name_file_type(
 import "C"
 
 import (
-	"unsafe"
-	"reflect"
-	"os"
 	"fmt"
-	"path"
 	"mime"
+	"os"
+	"path"
+	"reflect"
+	"unsafe"
 )
-
-
 
 type CurlError C.CURLcode
 
@@ -82,7 +79,7 @@ func (e CurlError) String() string {
 }
 
 func newCurlError(errno C.CURLcode) os.Error {
-	if errno == C.CURLE_OK {		// if nothing wrong
+	if errno == C.CURLE_OK { // if nothing wrong
 		return nil
 	}
 	return CurlError(errno)
@@ -93,9 +90,9 @@ type CURL struct {
 	handle unsafe.Pointer
 	// callback functions, bool ret means ok or not
 	headerFunction, writeFunction func([]byte, interface{}) bool
-	readFunction func([]byte, interface{}) int // return num of bytes writed to buf
-	progressFunction func(float64, float64, float64, float64, interface{}) bool
-	fnmatchFunction func(string, string, interface{}) int
+	readFunction                  func([]byte, interface{}) int // return num of bytes writed to buf
+	progressFunction              func(float64, float64, float64, float64, interface{}) bool
+	fnmatchFunction               func(string, string, interface{}) int
 	// callback datas
 	headerData, writeData, readData, progressData, fnmatchData *interface{}
 }
@@ -103,7 +100,7 @@ type CURL struct {
 // curl_easy_init - Start a libcurl easy session
 func EasyInit() *CURL {
 	p := C.curl_easy_init()
-	return &CURL{handle: p}		// other field defaults to nil
+	return &CURL{handle: p} // other field defaults to nil
 }
 
 // curl_easy_duphandle - Clone a libcurl session handle
@@ -128,17 +125,17 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 	}
 	switch {
 	// not really set
-	case opt == OPT_READDATA:	// OPT_INFILE
+	case opt == OPT_READDATA: // OPT_INFILE
 		curl.readData = &param
 		return nil
 	case opt == OPT_PROGRESSDATA:
 		curl.progressData = &param
 		return nil
-	case opt == OPT_HEADERDATA:	// also known as OPT_WRITEHEADER
+	case opt == OPT_HEADERDATA: // also known as OPT_WRITEHEADER
 		curl.headerData = &param
 		return nil
-	case opt == OPT_WRITEDATA:	// OPT_FILE
-	 	curl.writeData = &param
+	case opt == OPT_WRITEDATA: // OPT_FILE
+		curl.writeData = &param
 		return nil
 
 	case opt == OPT_READFUNCTION:
@@ -191,7 +188,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) os.Error {
 
 	// for OPT_HTTPPOST, use struct Form
 	case opt == OPT_HTTPPOST:
-		post := param.(* Form)
+		post := param.(*Form)
 		ptr := post.head
 		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), unsafe.Pointer(ptr)))
 
@@ -328,25 +325,25 @@ func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err os.Error) {
 	case C.CURLINFO_STRING:
 		a_string := C.CString("")
 		defer C.free(unsafe.Pointer(a_string))
-		err := newCurlError(C.curl_easy_getinfo_string(p, info, &a_string));
+		err := newCurlError(C.curl_easy_getinfo_string(p, info, &a_string))
 		ret := C.GoString(a_string)
 		print("debug (Getinfo) ", ret, "\n")
 		return ret, err
 	case C.CURLINFO_LONG:
 		a_long := C.long(-1)
-		err := newCurlError(C.curl_easy_getinfo_long(p, info, &a_long));
+		err := newCurlError(C.curl_easy_getinfo_long(p, info, &a_long))
 		ret := int(a_long)
 		print("debug (Getinfo) ", ret, "\n")
 		return ret, err
 	case C.CURLINFO_DOUBLE:
 		a_double := C.double(0.0)
-		err := newCurlError(C.curl_easy_getinfo_double(p, info, &a_double));
+		err := newCurlError(C.curl_easy_getinfo_double(p, info, &a_double))
 		ret := float64(a_double)
 		print("debug (Getinfo) ", ret, "\n")
 		return ret, err
-	case C.CURLINFO_SLIST:			// need fix
+	case C.CURLINFO_SLIST: // need fix
 		a_ptr_slist := new(_Ctype_struct_curl_slist)
-		err := newCurlError(C.curl_easy_getinfo_slist(p, info, a_ptr_slist));
+		err := newCurlError(C.curl_easy_getinfo_slist(p, info, a_ptr_slist))
 		ret := []string{}
 		for a_ptr_slist != nil {
 			print("!!debug (Getinfo) ", C.GoString(a_ptr_slist.data), a_ptr_slist.next, "\n")
@@ -360,10 +357,6 @@ func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err os.Error) {
 	panic("not implemented yet!")
 	return nil, nil
 }
-
-
-
-
 
 // A multipart/formdata HTTP POST form
 type Form struct {

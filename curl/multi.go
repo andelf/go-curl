@@ -13,8 +13,8 @@ static CURLMcode curl_multi_setopt_pointer(CURLM *handle, CURLMoption option, vo
 */
 import "C"
 import (
-	"unsafe"
 	"os"
+	"unsafe"
 )
 
 type CurlMultiError C.CURLMcode
@@ -25,14 +25,12 @@ func (e CurlMultiError) String() string {
 	return C.GoString(ret)
 }
 
-
 func newCurlMultiError(errno C.CURLMcode) os.Error {
-	if errno == C.CURLM_OK {		// if nothing wrong
+	if errno == C.CURLM_OK { // if nothing wrong
 		return nil
 	}
 	return CurlMultiError(errno)
 }
-
 
 type CURLM struct {
 	handle unsafe.Pointer
@@ -84,9 +82,9 @@ func (mcurl *CURLM) Setopt(opt int, param interface{}) os.Error {
 		return newCurlMultiError(C.curl_multi_setopt_pointer(p, C.CURLMoption(opt), nil))
 	}
 	switch opt {
-//  currently cannot support these option
-//	case MOPT_SOCKETFUNCTION, MOPT_SOCKETDATA, MOPT_TIMERFUNCTION, MOPT_TIMERDATA:
-//		panic("not supported CURLM.Setopt opt")
+	//  currently cannot support these option
+	//	case MOPT_SOCKETFUNCTION, MOPT_SOCKETDATA, MOPT_TIMERFUNCTION, MOPT_TIMERDATA:
+	//		panic("not supported CURLM.Setopt opt")
 	case MOPT_PIPELINING, MOPT_MAXCONNECTS:
 		val := C.long(0)
 		switch t := param.(type) {
@@ -104,7 +102,5 @@ func (mcurl *CURLM) Setopt(opt int, param interface{}) os.Error {
 	panic("not supported CURLM.Setopt opt or param")
 	return nil
 }
-
-
 
 // TODO curl_multi_info_read

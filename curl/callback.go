@@ -9,14 +9,14 @@ package curl
 import "C"
 
 import (
- 	"unsafe"
- 	"reflect"
+	"reflect"
+	"unsafe"
 )
 
 //export getCurlField
 func getCurlField(p uintptr, cname *C.char) uintptr {
 	name := C.GoString(cname)
-	curl := (* CURL)(unsafe.Pointer(p))
+	curl := (*CURL)(unsafe.Pointer(p))
 	switch name {
 	case "readFunction":
 		return reflect.ValueOf(curl.readFunction).Pointer()
@@ -41,14 +41,13 @@ func getCurlField(p uintptr, cname *C.char) uintptr {
 }
 
 //export nilInterface
-func nilInterface() interface{}{
+func nilInterface() interface{} {
 	return nil
 }
 
 // callback functions
 //export callWriteFunctionCallback
-func callWriteFunctionCallback(
-	f func([]byte, interface{}) bool,
+func callWriteFunctionCallback(f func([]byte, interface{}) bool,
 	ptr *C.char,
 	size C.size_t,
 	userdata interface{}) uintptr {
@@ -61,8 +60,7 @@ func callWriteFunctionCallback(
 }
 
 //export callProgressCallback
-func callProgressCallback(
-	f func(float64, float64, float64, float64, interface{}) bool,
+func callProgressCallback(f func(float64, float64, float64, float64, interface{}) bool,
 	userdata interface{},
 	dltotal, dlnow, ultotal, ulnow C.double) int {
 	// fdltotal, fdlnow, fultotal, fulnow
@@ -75,8 +73,7 @@ func callProgressCallback(
 }
 
 //export callReadFunctionCallback
-func callReadFunctionCallback(
-	f func([]byte, interface{}) int,
+func callReadFunctionCallback(f func([]byte, interface{}) int,
 	ptr *C.char,
 	size C.size_t,
 	userdata interface{}) uintptr {

@@ -1,4 +1,3 @@
-
 // 测试人人网登录, 并保存cookiejar
 package main
 
@@ -27,7 +26,7 @@ func main() {
 	easy.Setopt(curl.OPT_HTTPHEADER, []string{"Expect:"})
 
 	// easy.Setopt(curl.OPT_HTTPPOST, form)
-	easy.Setopt(curl.OPT_POSTFIELDS, "email=你的邮箱&password=你的密码&login=" + easy.Escape("登录"))
+	easy.Setopt(curl.OPT_POSTFIELDS, "email=你的邮箱&password=你的密码&login="+easy.Escape("登录"))
 
 	if err := easy.Perform(); err != nil {
 		println("ERROR: ", err.String(), err)

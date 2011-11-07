@@ -1,4 +1,3 @@
-
 package curl
 
 /*
@@ -13,8 +12,8 @@ static CURLSHcode curl_share_setopt_pointer(CURLSH *handle, CURLSHoption option,
 */
 import "C"
 import (
-	"unsafe"
 	"os"
+	"unsafe"
 )
 
 // implement os.Error interface
@@ -26,14 +25,12 @@ func (e CurlShareError) String() string {
 	return C.GoString(ret)
 }
 
-
 func newCurlShareError(errno C.CURLSHcode) os.Error {
-	if errno == C.CURLSHE_OK {		// if nothing wrong
+	if errno == C.CURLSHE_OK { // if nothing wrong
 		return nil
 	}
 	return CurlShareError(errno)
 }
-
 
 type CURLSH struct {
 	handle unsafe.Pointer
@@ -55,8 +52,8 @@ func (shcurl *CURLSH) Setopt(opt int, param interface{}) os.Error {
 		return newCurlShareError(C.curl_share_setopt_pointer(p, C.CURLSHoption(opt), nil))
 	}
 	switch opt {
-//	case SHOPT_LOCKFUNC, SHOPT_UNLOCKFUNC, SHOPT_USERDATA:
-//		panic("not supported")
+	//	case SHOPT_LOCKFUNC, SHOPT_UNLOCKFUNC, SHOPT_USERDATA:
+	//		panic("not supported")
 	case SHOPT_SHARE, SHOPT_UNSHARE:
 		if val, ok := param.(int); ok {
 			return newCurlShareError(C.curl_share_setopt_long(p, C.CURLSHoption(opt), C.long(val)))
