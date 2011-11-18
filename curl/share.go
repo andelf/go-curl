@@ -11,21 +11,19 @@ static CURLSHcode curl_share_setopt_pointer(CURLSH *handle, CURLSHoption option,
 }
 */
 import "C"
-import (
-	"os"
-	"unsafe"
-)
+
+import "unsafe"
 
 // implement os.Error interface
 type CurlShareError C.CURLMcode
 
-func (e CurlShareError) String() string {
+func (e CurlShareError) Error() string {
 	// ret is const char*, no need to free
 	ret := C.curl_share_strerror(C.CURLSHcode(e))
 	return C.GoString(ret)
 }
 
-func newCurlShareError(errno C.CURLSHcode) os.Error {
+func newCurlShareError(errno C.CURLSHcode) error {
 	if errno == C.CURLSHE_OK { // if nothing wrong
 		return nil
 	}
@@ -41,12 +39,12 @@ func ShareInit() *CURLSH {
 	return &CURLSH{p}
 }
 
-func (shcurl *CURLSH) Cleanup() os.Error {
+func (shcurl *CURLSH) Cleanup() error {
 	p := shcurl.handle
 	return newCurlShareError(C.curl_share_cleanup(p))
 }
 
-func (shcurl *CURLSH) Setopt(opt int, param interface{}) os.Error {
+func (shcurl *CURLSH) Setopt(opt int, param interface{}) error {
 	p := shcurl.handle
 	if param == nil {
 		return newCurlShareError(C.curl_share_setopt_pointer(p, C.CURLSHoption(opt), nil))

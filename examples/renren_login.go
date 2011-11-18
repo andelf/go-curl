@@ -29,6 +29,6 @@ func main() {
 	easy.Setopt(curl.OPT_POSTFIELDS, "email=你的邮箱&password=你的密码&login="+easy.Escape("登录"))
 
 	if err := easy.Perform(); err != nil {
-		println("ERROR: ", err.String(), err)
+		println("ERROR: ", err.Error())
 	}
 }

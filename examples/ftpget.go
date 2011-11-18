@@ -32,6 +32,6 @@ func main() {
 	easy.Setopt(curl.OPT_VERBOSE, true)
 
 	if err := easy.Perform(); err != nil {
-		println("ERROR", err.String())
+		println("ERROR", err.Error())
 	}
 }

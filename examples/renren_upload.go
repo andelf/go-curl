@@ -69,7 +69,7 @@ func main() {
 	})
 
 	if err := easy.Perform(); err != nil {
-		println("ERROR: ", err.String(), err)
+		println("ERROR: ", err.Error())
 	}
 
 	time.Sleep(1000000000) // wait gorotine

@@ -12,13 +12,12 @@ static char *string_array_index(char **p, int i) {
 import "C"
 
 import (
-	"os"
-	"time"
 	"unsafe"
+	"time"
 )
 
 // curl_global_init - Global libcurl initialisation
-func GlobalInit(flags int) os.Error {
+func GlobalInit(flags int) error {
 	return newCurlError(C.curl_global_init(C.long(flags)))
 }
 

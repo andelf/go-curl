@@ -12,20 +12,19 @@ static CURLMcode curl_multi_setopt_pointer(CURLM *handle, CURLMoption option, vo
 }
 */
 import "C"
-import (
-	"os"
-	"unsafe"
-)
+
+import "unsafe"
+
 
 type CurlMultiError C.CURLMcode
 
-func (e CurlMultiError) String() string {
+func (e CurlMultiError) Error() string {
 	// ret is const char*, no need to free
 	ret := C.curl_multi_strerror(C.CURLMcode(e))
 	return C.GoString(ret)
 }
 
-func newCurlMultiError(errno C.CURLMcode) os.Error {
+func newCurlMultiError(errno C.CURLMcode) error {
 	if errno == C.CURLM_OK { // if nothing wrong
 		return nil
 	}
@@ -43,13 +42,13 @@ func MultiInit() *CURLM {
 }
 
 // ok
-func (mcurl *CURLM) Cleanup() os.Error {
+func (mcurl *CURLM) Cleanup() error {
 	p := mcurl.handle
 	return newCurlMultiError(C.curl_multi_cleanup(p))
 }
 
 // ok
-func (mcurl *CURLM) Perform() (int, os.Error) {
+func (mcurl *CURLM) Perform() (int, error) {
 	p := mcurl.handle
 	running_handles := C.int(-1)
 	err := newCurlMultiError(C.curl_multi_perform(p, &running_handles))
@@ -57,26 +56,26 @@ func (mcurl *CURLM) Perform() (int, os.Error) {
 }
 
 // ok
-func (mcurl *CURLM) AddHandle(easy *CURL) os.Error {
+func (mcurl *CURLM) AddHandle(easy *CURL) error {
 	mp := mcurl.handle
 	easy_handle := easy.handle
 	return newCurlMultiError(C.curl_multi_add_handle(mp, easy_handle))
 }
 
-func (mcurl *CURLM) RemoveHandle(easy *CURL) os.Error {
+func (mcurl *CURLM) RemoveHandle(easy *CURL) error {
 	mp := mcurl.handle
 	easy_handle := easy.handle
 	return newCurlMultiError(C.curl_multi_remove_handle(mp, easy_handle))
 }
 
-func (mcurl *CURLM) Timeout() (int, os.Error) {
+func (mcurl *CURLM) Timeout() (int, error) {
 	p := mcurl.handle
 	timeout := C.long(-1)
 	err := newCurlMultiError(C.curl_multi_timeout(p, &timeout))
 	return int(timeout), err
 }
 
-func (mcurl *CURLM) Setopt(opt int, param interface{}) os.Error {
+func (mcurl *CURLM) Setopt(opt int, param interface{}) error {
 	p := mcurl.handle
 	if param == nil {
 		return newCurlMultiError(C.curl_multi_setopt_pointer(p, C.CURLMoption(opt), nil))

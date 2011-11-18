@@ -4,14 +4,12 @@ import (
 	"../curl/_obj/curl"
 	"fmt"
 	"os"
-	"reflect"
-	//	"dump"
 )
 
 const endl = "\n"
 
 func main() {
-	println("DEBUG chdir=>", os.Chdir("/sadf").String())
+	println("DEBUG chdir=>", os.Chdir("/sadf"))
 	ret := curl.EasyInit()
 	defer ret.Cleanup()
 	print("init =>", ret, " ", reflect.TypeOf(ret).String(), endl)

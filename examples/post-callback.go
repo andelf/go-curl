@@ -36,7 +36,7 @@ func main() {
 	easy.Setopt(curl.OPT_POSTFIELDSIZE, len(POST_DATA))
 
 	if err := easy.Perform(); err != nil {
-		println("ERROR: ", err.String(), err)
+		println("ERROR: ", err.Error())
 	}
 
 	time.Sleep(10000) // wait gorotine
