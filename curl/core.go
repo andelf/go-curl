@@ -89,14 +89,15 @@ func VersionInfo(ver C.CURLversion) *VersionInfoData {
 
 // curl_getdate - Convert a date string to number of seconds since January 1, 1970
 // In golang, we convert it to a *time.Time
-func Getdate(date string) time.Time {
+func Getdate(date string) *time.Time {
 	datestr := C.CString(date)
 	defer C.free(unsafe.Pointer(datestr))
 	t := C.curl_getdate(datestr, nil)
 	if t == -1 {
 		return nil
 	}
-	return time.Unix(int64(t), 0).UTC()
+    unix := time.Unix(int64(t), 0).UTC()
+	return &unix
 
 	/*
 		// curl_getenv - return value for environment name
