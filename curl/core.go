@@ -12,8 +12,8 @@ static char *string_array_index(char **p, int i) {
 import "C"
 
 import (
-	"unsafe"
 	"time"
+	"unsafe"
 )
 
 // curl_global_init - Global libcurl initialisation
@@ -89,26 +89,26 @@ func VersionInfo(ver C.CURLversion) *VersionInfoData {
 
 // curl_getdate - Convert a date string to number of seconds since January 1, 1970
 // In golang, we convert it to a *time.Time
-func Getdate(date string) *time.Time {
+func Getdate(date string) time.Time {
 	datestr := C.CString(date)
 	defer C.free(unsafe.Pointer(datestr))
 	t := C.curl_getdate(datestr, nil)
 	if t == -1 {
 		return nil
 	}
-	return time.SecondsToUTC(int64(t))
-}
+	return time.Unix(int64(t), 0).UTC()
 
-/*
-// curl_getenv - return value for environment name
-func Getenv(name string) string {
-	namestr := C.CString(name)
-	defer C.free(unsafe.Pointer(namestr))
-	ret := C.curl_getenv(unsafe.Pointer(namestr))
-	defer C.free(unsafe.Pointer(ret))
+	/*
+		// curl_getenv - return value for environment name
+		func Getenv(name string) string {
+			namestr := C.CString(name)
+			defer C.free(unsafe.Pointer(namestr))
+			ret := C.curl_getenv(unsafe.Pointer(namestr))
+			defer C.free(unsafe.Pointer(ret))
 
-	return C.GoString(ret)
+			return C.GoString(ret)
+		}
+	*/
 }
-*/
 
 // TODO: curl_global_init_mem
