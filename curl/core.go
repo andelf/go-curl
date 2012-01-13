@@ -12,8 +12,8 @@ static char *string_array_index(char **p, int i) {
 import "C"
 
 import (
-	"unsafe"
 	"time"
+	"unsafe"
 )
 
 // curl_global_init - Global libcurl initialisation
@@ -96,19 +96,20 @@ func Getdate(date string) *time.Time {
 	if t == -1 {
 		return nil
 	}
-	return time.SecondsToUTC(int64(t))
-}
+    unix := time.Unix(int64(t), 0).UTC()
+	return &unix
 
-/*
-// curl_getenv - return value for environment name
-func Getenv(name string) string {
-	namestr := C.CString(name)
-	defer C.free(unsafe.Pointer(namestr))
-	ret := C.curl_getenv(unsafe.Pointer(namestr))
-	defer C.free(unsafe.Pointer(ret))
+	/*
+		// curl_getenv - return value for environment name
+		func Getenv(name string) string {
+			namestr := C.CString(name)
+			defer C.free(unsafe.Pointer(namestr))
+			ret := C.curl_getenv(unsafe.Pointer(namestr))
+			defer C.free(unsafe.Pointer(ret))
 
-	return C.GoString(ret)
+			return C.GoString(ret)
+		}
+	*/
 }
-*/
 
 // TODO: curl_global_init_mem
