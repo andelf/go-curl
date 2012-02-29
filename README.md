@@ -20,8 +20,8 @@ Current Development Statue
 How to Install
 --------------
 
-	$ goinstall github.com/andelf/go-curl/curl
-
+	$ goinstall github.com/andelf/go-curl/curl  # or newer
+    $ go get -u github.com/andelf/go-curl/curl
 
 Current Status
 --------------
