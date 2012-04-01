@@ -3,8 +3,53 @@ package curl
 
 /*
 #cgo linux pkg-config: libcurl
+#cgo windows LDFLAGS: -lcurl
 #include <stdlib.h>
 #include <curl/curl.h>
+
+#ifndef CURL_VERSION_SSL
+#define CURL_VERSION_SSL       (1<<2)
+#endif
+#ifndef CURL_VERSION_LIBZ
+#define CURL_VERSION_LIBZ      (1<<3)
+#endif
+#ifndef CURL_VERSION_NTLM
+#define CURL_VERSION_NTLM      (1<<4)
+#endif
+#ifndef CURL_VERSION_GSSNEGOTIATE
+#define CURL_VERSION_GSSNEGOTIATE (1<<5)
+#endif
+#ifndef CURL_VERSION_DEBUG
+#define CURL_VERSION_DEBUG     (1<<6)
+#endif
+#ifndef CURL_VERSION_ASYNCHDNS
+#define CURL_VERSION_ASYNCHDNS (1<<7)
+#endif
+#ifndef CURL_VERSION_SPNEGO
+#define CURL_VERSION_SPNEGO    (1<<8)
+#endif
+#ifndef CURL_VERSION_LARGEFILE
+#define CURL_VERSION_LARGEFILE (1<<9)
+#endif
+#ifndef CURL_VERSION_IDN
+#define CURL_VERSION_IDN       (1<<10)
+#endif
+#ifndef CURL_VERSION_SSPI
+#define CURL_VERSION_SSPI      (1<<11)
+#endif
+#ifndef CURL_VERSION_CONV
+#define CURL_VERSION_CONV      (1<<12)
+#endif
+#ifndef CURL_VERSION_CURLDEBUG
+#define CURL_VERSION_CURLDEBUG (1<<13)
+#endif
+#ifndef CURL_VERSION_TLSAUTH_SRP
+#define CURL_VERSION_TLSAUTH_SRP (1<<14)
+#endif
+#ifndef CURL_VERSION_NTLM_WB
+#define CURL_VERSION_NTLM_WB   (1<<15)
+#endif
+
 static char *string_array_index(char **p, int i) {
   return p[i];
 }
@@ -15,6 +60,7 @@ import (
 	"time"
 	"unsafe"
 )
+
 
 // curl_global_init - Global libcurl initialisation
 func GlobalInit(flags int) error {

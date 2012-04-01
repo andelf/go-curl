@@ -1,7 +1,6 @@
 package curl
 
 /*
-#cgo linux pkg-config: libcurl
 #include <curl/curl.h>
 static CURLSHcode curl_share_setopt_long(CURLSH *handle, CURLSHoption option, long parameter) {
   return curl_share_setopt(handle, option, parameter);

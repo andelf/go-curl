@@ -1,7 +1,6 @@
 package curl
 
 /*
-#cgo linux pkg-config: libcurl
 #include <stdlib.h>
 #include <curl/curl.h>
 static CURLMcode curl_multi_setopt_long(CURLM *handle, CURLMoption option, long parameter) {

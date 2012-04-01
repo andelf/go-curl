@@ -20,21 +20,16 @@ Current Development Statue
 How to Install
 --------------
 
-	$ goinstall github.com/andelf/go-curl/curl  # or newer
     $ go get -u github.com/andelf/go-curl/curl
+	$ goinstall github.com/andelf/go-curl/curl  # older weekly
 
 Current Status
 --------------
 
  * Linux x64
-   * passed go1
-   * passed go release.r59 9022 (arch pacman)
-   * passed go release.r60 9481 (arch pacman)
-   * failed go release.r60.3 9516 (arch pacman, crosscall2: not defined)
-   * passed go weekly.2011-10-18 10143 (gcc, hg repo)
-   * passed go weekly.2011-10-18 10143 (clang, hg repo)
+   * passed go1 (ArchLinux)
  * Windows x86
-   * passed go release.r60.3 9516 (win7, mingw-gcc 4.5.2)
+   * passed go1 (win7, mingw-gcc 4.5.2, curl 7.22.0)
 
 Sample Program
 --------------

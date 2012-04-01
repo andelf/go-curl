@@ -1,10 +1,10 @@
 package curl
 
 /*
-#cgo linux pkg-config: libcurl
 #include <stdlib.h>
 #include <curl/curl.h>
 #include "callback.h"
+
 static CURLcode curl_easy_setopt_long(CURL *handle, CURLoption option, long parameter) {
   return curl_easy_setopt(handle, option, parameter);
 }
@@ -68,6 +68,7 @@ import (
 	"reflect"
 	"unsafe"
 )
+
 
 type CurlError C.CURLcode
 

@@ -1,7 +1,6 @@
 package curl
 
 /*
-#cgo linux pkg-config: libcurl
 #include <stdlib.h>
 #include <string.h>
 #include <curl/curl.h>
@@ -12,6 +11,7 @@ import (
 	"reflect"
 	"unsafe"
 )
+
 
 //export getCurlField
 func getCurlField(p uintptr, cname *C.char) uintptr {

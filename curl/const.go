@@ -1,8 +1,23 @@
 package curl
 
-// #cgo linux pkg-config: libcurl
-// #include <curl/curl.h>
+/*
+#include <curl/curl.h>
+
+#ifndef CURLE_AGAIN
+#define CURLE_AGAIN 81
+#endif
+#ifndef CURLE_SSL_CRL_BADFILE
+#define CURLE_SSL_CRL_BADFILE 82
+#endif
+#ifndef CURLE_SSL_ISSUER_ERROR
+#define CURLE_SSL_ISSUER_ERROR 83
+#endif
+#ifndef CURLE_FTP_PRET_FAILED
+#define CURLE_FTP_PRET_FAILED 84
+#endif
+*/
 import "C"
+
 
 // for GlobalInit(flag)
 const (
@@ -482,8 +497,9 @@ const (
 	OPT_TLSAUTH_PASSWORD           = C.CURLOPT_TLSAUTH_PASSWORD
 	OPT_TLSAUTH_TYPE               = C.CURLOPT_TLSAUTH_TYPE
 	OPT_TRANSFER_ENCODING          = C.CURLOPT_TRANSFER_ENCODING
-	OPT_CLOSESOCKETFUNCTION        = C.CURLOPT_CLOSESOCKETFUNCTION
-	OPT_CLOSESOCKETDATA            = C.CURLOPT_CLOSESOCKETDATA
+	// unsupported
+	//OPT_CLOSESOCKETFUNCTION        = C.CURLOPT_CLOSESOCKETFUNCTION
+	//OPT_CLOSESOCKETDATA            = C.CURLOPT_CLOSESOCKETDATA
 	// alias
 	OPT_WRITEDATA  = C.CURLOPT_WRITEDATA
 	OPT_READDATA   = C.CURLOPT_READDATA
