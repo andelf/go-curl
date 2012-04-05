@@ -21,7 +21,6 @@ How to Install
 --------------
 
     $ go get -u github.com/andelf/go-curl/curl
-        $ goinstall github.com/andelf/go-curl/curl  # older weekly
 
 Current Status
 --------------
