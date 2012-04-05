@@ -80,7 +80,7 @@ const (
 
 // CURLcode
 const (
-        E_OK                       = C.CURLE_OK
+//        E_OK                       = C.CURLE_OK
         E_UNSUPPORTED_PROTOCOL     = C.CURLE_UNSUPPORTED_PROTOCOL
         E_FAILED_INIT              = C.CURLE_FAILED_INIT
         E_URL_MALFORMAT            = C.CURLE_URL_MALFORMAT
@@ -606,7 +606,7 @@ const (
 // CURLMcode
 const (
         M_CALL_MULTI_PERFORM = C.CURLM_CALL_MULTI_PERFORM
-        M_OK                 = C.CURLM_OK
+//        M_OK                 = C.CURLM_OK
         M_BAD_HANDLE         = C.CURLM_BAD_HANDLE
         M_BAD_EASY_HANDLE    = C.CURLM_BAD_EASY_HANDLE
         M_OUT_OF_MEMORY      = C.CURLM_OUT_OF_MEMORY
@@ -627,7 +627,7 @@ const (
 
 // CURLSHcode
 const (
-        SHE_OK         = C.CURLSHE_OK
+//        SHE_OK         = C.CURLSHE_OK
         SHE_BAD_OPTION = C.CURLSHE_BAD_OPTION
         SHE_IN_USE     = C.CURLSHE_IN_USE
         SHE_INVALID    = C.CURLSHE_INVALID

@@ -3,6 +3,7 @@ package curl
 
 /*
 #cgo linux pkg-config: libcurl
+#cgo darwin LDFLAGS: -lcurl
 #cgo windows LDFLAGS: -lcurl
 #include <stdlib.h>
 #include <curl/curl.h>
