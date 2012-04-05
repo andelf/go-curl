@@ -21,7 +21,7 @@ How to Install
 --------------
 
     $ go get -u github.com/andelf/go-curl/curl
-	$ goinstall github.com/andelf/go-curl/curl  # older weekly
+        $ goinstall github.com/andelf/go-curl/curl  # older weekly
 
 Current Status
 --------------
@@ -30,6 +30,8 @@ Current Status
    * passed go1 (ArchLinux)
  * Windows x86
    * passed go1 (win7, mingw-gcc 4.5.2, curl 7.22.0)
+ * Mac OS
+   * passed go1 (Mac OS X 10.7.3, curl 7.21.4)
 
 Sample Program
 --------------
