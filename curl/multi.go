@@ -81,11 +81,11 @@ func (mcurl *CURLM) Setopt(opt int, param interface{}) error {
 	if param == nil {
 		return newCurlMultiError(C.curl_multi_setopt_pointer(p, C.CURLMoption(opt), nil))
 	}
-	switch opt {
+	switch {
 	//  currently cannot support these option
 	//	case MOPT_SOCKETFUNCTION, MOPT_SOCKETDATA, MOPT_TIMERFUNCTION, MOPT_TIMERDATA:
 	//		panic("not supported CURLM.Setopt opt")
-	case MOPT_PIPELINING, MOPT_MAXCONNECTS:
+	case opt >= C.CURLOPTTYPE_LONG:
 		val := C.long(0)
 		switch t := param.(type) {
 		case int:
