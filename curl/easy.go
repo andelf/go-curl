@@ -37,24 +37,24 @@ static CURLcode curl_easy_getinfo_slist(CURL *curl, CURLINFO info, struct curl_s
 static CURLFORMcode curl_formadd_name_content_length(
     struct curl_httppost **httppost, struct curl_httppost **last_post, char *name, char *content, int length) {
     return curl_formadd(httppost, last_post,
-                        CURLFORM_COPYNAME, name,
-                        CURLFORM_COPYCONTENTS, content,
-                        CURLFORM_CONTENTSLENGTH, length, CURLFORM_END);
+			CURLFORM_COPYNAME, name,
+			CURLFORM_COPYCONTENTS, content,
+			CURLFORM_CONTENTSLENGTH, length, CURLFORM_END);
 }
 static CURLFORMcode curl_formadd_name_content_length_type(
     struct curl_httppost **httppost, struct curl_httppost **last_post, char *name, char *content, int length, char *type) {
     return curl_formadd(httppost, last_post,
-                        CURLFORM_COPYNAME, name,
-                        CURLFORM_COPYCONTENTS, content,
-                        CURLFORM_CONTENTSLENGTH, length,
-                        CURLFORM_CONTENTTYPE, type, CURLFORM_END);
+			CURLFORM_COPYNAME, name,
+			CURLFORM_COPYCONTENTS, content,
+			CURLFORM_CONTENTSLENGTH, length,
+			CURLFORM_CONTENTTYPE, type, CURLFORM_END);
 }
 static CURLFORMcode curl_formadd_name_file_type(
     struct curl_httppost **httppost, struct curl_httppost **last_post, char *name, char *filename, char *type) {
     return curl_formadd(httppost, last_post,
-                        CURLFORM_COPYNAME, name,
-                        CURLFORM_FILE, filename,
-                        CURLFORM_CONTENTTYPE, type, CURLFORM_END);
+			CURLFORM_COPYNAME, name,
+			CURLFORM_FILE, filename,
+			CURLFORM_CONTENTTYPE, type, CURLFORM_END);
 }
  // TODO: support multi file
 
@@ -115,7 +115,7 @@ func (curl *CURL) Cleanup() {
 }
 
 // curl_easy_setopt - set options for a curl easy handle
-// WARNING: afunction pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
+// WARNING: a function pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
 func (curl *CURL) Setopt(opt int, param interface{}) error {
 	p := curl.handle
 	if param == nil {
@@ -191,7 +191,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) error {
 		ptr := post.head
 		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), unsafe.Pointer(ptr)))
 
-	case opt > C.CURLOPTTYPE_OFF_T:
+	case opt >= C.CURLOPTTYPE_OFF_T:
 		val := C.off_t(0)
 		switch t := param.(type) {
 		case int:
@@ -203,11 +203,11 @@ func (curl *CURL) Setopt(opt int, param interface{}) error {
 		}
 		return newCurlError(C.curl_easy_setopt_off_t(p, C.CURLoption(opt), val))
 
-	case opt > C.CURLOPTTYPE_FUNCTIONPOINT:
+	case opt >= C.CURLOPTTYPE_FUNCTIONPOINT:
 		// function pointer
 		panic("function poionter not implemented yet!")
 
-	case opt > C.CURLOPTTYPE_OBJECTPOINT:
+	case opt >= C.CURLOPTTYPE_OBJECTPOINT:
 		switch t := param.(type) {
 		case string:
 			// FIXME: memory leak, some opt needs we hold a c string till perform()
@@ -234,7 +234,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) error {
 			return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt),
 				unsafe.Pointer(&param)))
 		}
-	case opt > C.CURLOPTTYPE_LONG:
+	case opt >= C.CURLOPTTYPE_LONG:
 		val := C.long(0)
 		switch t := param.(type) {
 		case int:
@@ -272,7 +272,6 @@ func (curl *CURL) Recv(buffer []byte) (int, error) {
 	n := C.size_t(0)
 	ret := C.curl_easy_recv(p, unsafe.Pointer(buf), C.size_t(buflen), &n)
 	return copy(buffer, C.GoStringN(buf, C.int(n))), newCurlError(ret)
-
 }
 
 // curl_easy_perform - Perform a file transfer

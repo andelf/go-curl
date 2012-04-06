@@ -4,6 +4,7 @@ package curl
 #include <stdlib.h>
 #include <string.h>
 #include <curl/curl.h>
+
 */
 import "C"
 

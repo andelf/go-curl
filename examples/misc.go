@@ -27,6 +27,7 @@ func main() {
 
 	// auto calculate port
 	// print("set port =>", ret.EasySetopt(curl.OPT_PORT, 6060), endl)
+	fmt.Printf("XXXX debug setopt %#v \n", ret.Setopt(30000, 19).Error())
 
 	print("set timeout =>", ret.Setopt(curl.OPT_TIMEOUT, 20), endl)
 
@@ -90,13 +91,13 @@ func main() {
 	// ret.Getinfo(curl.INFO_SSL_ENGINES)
 
 	/*	mret := curl.MultiInit()
-	mret.AddHandle(ret)			// works
-	defer mret.Cleanup()
-	if ok, handles := mret.Perform(); ok == curl.OK {
-	        fmt.Printf("ok=%s, handles=%d\n", ok, handles)
-	} else {
-	        fmt.Printf("error calling multi\n")
-	}
+		mret.AddHandle(ret)			// works
+		defer mret.Cleanup()
+		if ok, handles := mret.Perform(); ok == curl.OK {
+			fmt.Printf("ok=%s, handles=%d\n", ok, handles)
+		} else {
+			fmt.Printf("error calling multi\n")
+		}
 	*/
 	println("================================")
 	//println(curl.GlobalInit(curl.GLOBAL_SSL))
