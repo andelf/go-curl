@@ -4,6 +4,7 @@ package curl
 #include <stdlib.h>
 #include <curl/curl.h>
 #include "callback.h"
+#include "compat.h"
 
 static CURLcode curl_easy_setopt_long(CURL *handle, CURLoption option, long parameter) {
   return curl_easy_setopt(handle, option, parameter);
@@ -37,24 +38,24 @@ static CURLcode curl_easy_getinfo_slist(CURL *curl, CURLINFO info, struct curl_s
 static CURLFORMcode curl_formadd_name_content_length(
     struct curl_httppost **httppost, struct curl_httppost **last_post, char *name, char *content, int length) {
     return curl_formadd(httppost, last_post,
-			CURLFORM_COPYNAME, name,
-			CURLFORM_COPYCONTENTS, content,
-			CURLFORM_CONTENTSLENGTH, length, CURLFORM_END);
+                        CURLFORM_COPYNAME, name,
+                        CURLFORM_COPYCONTENTS, content,
+                        CURLFORM_CONTENTSLENGTH, length, CURLFORM_END);
 }
 static CURLFORMcode curl_formadd_name_content_length_type(
     struct curl_httppost **httppost, struct curl_httppost **last_post, char *name, char *content, int length, char *type) {
     return curl_formadd(httppost, last_post,
-			CURLFORM_COPYNAME, name,
-			CURLFORM_COPYCONTENTS, content,
-			CURLFORM_CONTENTSLENGTH, length,
-			CURLFORM_CONTENTTYPE, type, CURLFORM_END);
+                        CURLFORM_COPYNAME, name,
+                        CURLFORM_COPYCONTENTS, content,
+                        CURLFORM_CONTENTSLENGTH, length,
+                        CURLFORM_CONTENTTYPE, type, CURLFORM_END);
 }
 static CURLFORMcode curl_formadd_name_file_type(
     struct curl_httppost **httppost, struct curl_httppost **last_post, char *name, char *filename, char *type) {
     return curl_formadd(httppost, last_post,
-			CURLFORM_COPYNAME, name,
-			CURLFORM_FILE, filename,
-			CURLFORM_CONTENTTYPE, type, CURLFORM_END);
+                        CURLFORM_COPYNAME, name,
+                        CURLFORM_FILE, filename,
+                        CURLFORM_CONTENTTYPE, type, CURLFORM_END);
 }
  // TODO: support multi file
 
