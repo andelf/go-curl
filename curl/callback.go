@@ -13,8 +13,8 @@ import (
 	"unsafe"
 )
 
-//export getCurlField
-func getCurlField(p uintptr, cname *C.char) uintptr {
+//export goGetCurlField
+func goGetCurlField(p uintptr, cname *C.char) uintptr {
 	name := C.GoString(cname)
 	curl := (*CURL)(unsafe.Pointer(p))
 	switch name {
@@ -40,14 +40,14 @@ func getCurlField(p uintptr, cname *C.char) uintptr {
 	return 0
 }
 
-//export nilInterface
-func nilInterface() interface{} {
+//export goNilInterface
+func goNilInterface() interface{} {
 	return nil
 }
 
 // callback functions
-//export callWriteFunctionCallback
-func callWriteFunctionCallback(f func([]byte, interface{}) bool,
+//export goCallWriteFunctionCallback
+func goCallWriteFunctionCallback(f func([]byte, interface{}) bool,
 	ptr *C.char,
 	size C.size_t,
 	userdata interface{}) uintptr {
@@ -59,8 +59,8 @@ func callWriteFunctionCallback(f func([]byte, interface{}) bool,
 	return uintptr(C.CURL_MAX_WRITE_SIZE + 1)
 }
 
-//export callProgressCallback
-func callProgressCallback(f func(float64, float64, float64, float64, interface{}) bool,
+//export goCallProgressCallback
+func goCallProgressCallback(f func(float64, float64, float64, float64, interface{}) bool,
 	userdata interface{},
 	dltotal, dlnow, ultotal, ulnow C.double) int {
 	// fdltotal, fdlnow, fultotal, fulnow
@@ -72,8 +72,8 @@ func callProgressCallback(f func(float64, float64, float64, float64, interface{}
 	return 1
 }
 
-//export callReadFunctionCallback
-func callReadFunctionCallback(f func([]byte, interface{}) int,
+//export goCallReadFunctionCallback
+func goCallReadFunctionCallback(f func([]byte, interface{}) int,
 	ptr *C.char,
 	size C.size_t,
 	userdata interface{}) uintptr {
