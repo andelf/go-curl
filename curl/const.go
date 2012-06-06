@@ -311,6 +311,8 @@ const (
 	// OPT_DNS_USE_GLOBAL_CACHE = C.CURLOPT_DNS_USE_GLOBAL_CACHE
 	// DNS cache timeout. int
 	OPT_DNS_CACHE_TIMEOUT = C.CURLOPT_DNS_CACHE_TIMEOUT
+	// use a global cache for multiple DNS requests in the same process
+	OPT_DNS_USE_GLOBAL_CACHE = C.CURLOPT_DNS_USE_GLOBAL_CACHE
 	// send linked-list of pre-transfer QUOTE commands. []string
 	OPT_PREQUOTE = C.CURLOPT_PREQUOTE
 	// WARN: not implemented yet
