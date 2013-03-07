@@ -20,7 +20,7 @@ Current Development Statue
 How to Install
 --------------
 
-    $ go get -u github.com/andelf/go-curl/curl
+    $ go get -u github.com/andelf/go-curl
 
 Current Status
 --------------
@@ -40,7 +40,7 @@ package main
 
 import (
     "fmt"
-    "github.com/andelf/go-curl/curl"
+    curl "github.com/andelf/go-curl"
 )
 
 func main() {
