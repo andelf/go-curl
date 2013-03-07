@@ -3,7 +3,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/andelf/go-curl/curl"
+	curl "github.com/andelf/go-curl"
 	"regexp"
 	"time"
 )

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/andelf/go-curl/curl"
+	curl "github.com/andelf/go-curl"
 	"time"
 )
 
