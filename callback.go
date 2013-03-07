@@ -56,7 +56,8 @@ func goCallWriteFunctionCallback(f func([]byte, interface{}) bool,
 	if ok {
 		return uintptr(size)
 	}
-	return uintptr(C.CURL_MAX_WRITE_SIZE + 1)
+	//return uintptr(C.CURL_MAX_WRITE_SIZE + 1)
+	return C.CURL_WRITEFUNC_PAUSE
 }
 
 //export goCallProgressCallback
