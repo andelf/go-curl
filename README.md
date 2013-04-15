@@ -20,6 +20,9 @@ Current Development Statue
 How to Install
 --------------
 
+Make Sure You Have libcurl (and its develop headers, static/dynamic libs) installed!
+
+
     $ go get -u github.com/andelf/go-curl
 
 Current Status
