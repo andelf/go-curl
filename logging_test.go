@@ -14,15 +14,15 @@ func TestDefaultLogLevel(t *testing.T) {
     if log_level != _DEFAULT_LOG_LEVEL {t.Error("Test failed, expected DEFAULT_LOG_LEVEL level.")}
 }
 
-func TestsetLogLevel(t *testing.T) {
-    setLogLevel("DEBUG")
-    defer setLogLevel("DEFAULT_LOG_LEVEL")
+func TestSetLogLevel(t *testing.T) {
+    SetLogLevel("DEBUG")
+    defer SetLogLevel("DEFAULT_LOG_LEVEL")
     if log_level != _DEBUG {t.Error("Test failed, expected DEBUG level.")}
-    setLogLevel("INFO")
+    SetLogLevel("INFO")
     if log_level != _INFO {t.Error("Test failed, expected INFO level.")}
-    setLogLevel("WARN")
+    SetLogLevel("WARN")
     if log_level != _WARN {t.Error("Test failed, expected WARN level.")}
-    setLogLevel("ERROR")
+    SetLogLevel("ERROR")
     if log_level != _ERROR {t.Error("Test failed, expected ERROR level.")}
 }
 
@@ -37,8 +37,8 @@ func TestLogf(t *testing.T) {
     buf := new(bytes.Buffer)
     log.SetOutput(buf)
     defer log.SetOutput(os.Stderr)
-    setLogLevel("DEBUG")
-    defer setLogLevel("DEFAULT_LOG_LEVEL")
+    SetLogLevel("DEBUG")
+    defer SetLogLevel("DEFAULT_LOG_LEVEL")
 
     logf(_DEBUG, testFormat, testArgument)
     line := buf.String()
@@ -52,8 +52,8 @@ func TestLogfUsesLogLevel(t *testing.T) {
     buf := new(bytes.Buffer)
     log.SetOutput(buf)
     defer log.SetOutput(os.Stderr)
-    setLogLevel("WARN")
-    defer setLogLevel("DEFAULT_LOG_LEVEL")
+    SetLogLevel("WARN")
+    defer SetLogLevel("DEFAULT_LOG_LEVEL")
 
     logf(_DEBUG, testFormat, testArgument)
     line := buf.String()

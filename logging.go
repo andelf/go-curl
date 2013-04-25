@@ -15,10 +15,10 @@ const _DEFAULT_LOG_LEVEL = _WARN
 
 var log_level = _DEFAULT_LOG_LEVEL
 
-// setLogLevel changes the log level which determines the granularity of the
+// SetLogLevel changes the log level which determines the granularity of the
 // messages that are logged.  Available log levels are: "DEBUG", "INFO",
 // "WARN", "ERROR" and "DEFAULT_LOG_LEVEL".
-func setLogLevel(levelName string) {
+func SetLogLevel(levelName string) {
     switch levelName {
     case "DEBUG":
         log_level = _DEBUG
