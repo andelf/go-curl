@@ -326,26 +326,26 @@ func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err error) {
 		defer C.free(unsafe.Pointer(a_string))
 		err := newCurlError(C.curl_easy_getinfo_string(p, info, &a_string))
 		ret := C.GoString(a_string)
-		print("debug (Getinfo) ", ret, "\n")
+		debugf("Getinfo %s", ret)
 		return ret, err
 	case C.CURLINFO_LONG:
 		a_long := C.long(-1)
 		err := newCurlError(C.curl_easy_getinfo_long(p, info, &a_long))
 		ret := int(a_long)
-		print("debug (Getinfo) ", ret, "\n")
+		debugf("Getinfo %s", ret)
 		return ret, err
 	case C.CURLINFO_DOUBLE:
 		a_double := C.double(0.0)
 		err := newCurlError(C.curl_easy_getinfo_double(p, info, &a_double))
 		ret := float64(a_double)
-		print("debug (Getinfo) ", ret, "\n")
+		debugf("Getinfo %s", ret)
 		return ret, err
 	case C.CURLINFO_SLIST: // need fix
 		a_ptr_slist := new(_Ctype_struct_curl_slist)
 		err := newCurlError(C.curl_easy_getinfo_slist(p, info, a_ptr_slist))
 		ret := []string{}
 		for a_ptr_slist != nil {
-			print("!!debug (Getinfo) ", C.GoString(a_ptr_slist.data), a_ptr_slist.next, "\n")
+			debugf("Getinfo %s %v", C.GoString(a_ptr_slist.data), a_ptr_slist.next)
 			ret = append(ret, C.GoString(a_ptr_slist.data))
 			a_ptr_slist = a_ptr_slist.next
 		}

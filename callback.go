@@ -36,7 +36,7 @@ func goGetCurlField(p uintptr, cname *C.char) uintptr {
 		return uintptr(unsafe.Pointer(curl.progressData))
 	}
 
-	println("WARNING: field not found: ", name)
+	warnf("Field not found: %s", name)
 	return 0
 }
 
