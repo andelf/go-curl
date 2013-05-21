@@ -200,13 +200,13 @@ func (curl *CURL) Setopt(opt int, param interface{}) error {
 		case uint64:
 			val = C.off_t(t)
 		default:
-			panic("not supported OFF_T converstion")
+			panic("OFF_T conversion not supported")
 		}
 		return newCurlError(C.curl_easy_setopt_off_t(p, C.CURLoption(opt), val))
 
 	case opt >= C.CURLOPTTYPE_FUNCTIONPOINT:
 		// function pointer
-		panic("function poionter not implemented yet!")
+		panic("function pointer not implemented yet!")
 
 	case opt >= C.CURLOPTTYPE_OBJECTPOINT:
 		switch t := param.(type) {
