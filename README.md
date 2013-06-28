@@ -3,14 +3,17 @@ go-curl
 
 my golang libcurl(curl) binding.
 
- * under active development
- * by andelf
-
 See more examples in ./examples/ directory~!
+
+LICENSE
+-------
+
+go-curl is licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0.html).
 
 Current Development Statue
 --------------------------
 
+ * currently stable
  * READ, WRITE, HEADER, PROGRESS function callback
  * a Multipart Form supports file uploading
  * Most curl_easy_setopt option
