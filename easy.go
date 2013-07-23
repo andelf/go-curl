@@ -118,7 +118,6 @@ func (curl *CURL) Cleanup() {
 // curl_easy_setopt - set options for a curl easy handle
 // WARNING: a function pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
 func (curl *CURL) Setopt(opt int, param interface{}) error {
-	fmt.Printf("Setopt got param %#v\n", param)
 	p := curl.handle
 	if param == nil {
 		// NOTE: some option will crash program when got a nil param
