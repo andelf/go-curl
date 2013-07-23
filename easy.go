@@ -89,10 +89,10 @@ func newCurlError(errno C.CURLcode) error {
 type CURL struct {
 	handle unsafe.Pointer
 	// callback functions, bool ret means ok or not
-	headerFunction, writeFunction func([]byte, interface{}) bool
-	readFunction                  func([]byte, interface{}) int // return num of bytes writed to buf
-	progressFunction              func(float64, float64, float64, float64, interface{}) bool
-	fnmatchFunction               func(string, string, interface{}) int
+	headerFunction, writeFunction *func([]byte, interface{}) bool
+	readFunction                  *func([]byte, interface{}) int // return num of bytes writed to buf
+	progressFunction              *func(float64, float64, float64, float64, interface{}) bool
+	fnmatchFunction               *func(string, string, interface{}) int
 	// callback datas
 	headerData, writeData, readData, progressData, fnmatchData *interface{}
 }
@@ -118,6 +118,7 @@ func (curl *CURL) Cleanup() {
 // curl_easy_setopt - set options for a curl easy handle
 // WARNING: a function pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
 func (curl *CURL) Setopt(opt int, param interface{}) error {
+	fmt.Printf("Setopt got param %#v\n", param)
 	p := curl.handle
 	if param == nil {
 		// NOTE: some option will crash program when got a nil param
@@ -140,7 +141,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) error {
 
 	case opt == OPT_READFUNCTION:
 		fun := param.(func([]byte, interface{}) int)
-		curl.readFunction = fun
+		curl.readFunction = &fun
 
 		ptr := C.return_read_function()
 		if err := newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr)); err == nil {
@@ -152,7 +153,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) error {
 
 	case opt == OPT_PROGRESSFUNCTION:
 		fun := param.(func(float64, float64, float64, float64, interface{}) bool)
-		curl.progressFunction = fun
+		curl.progressFunction = &fun
 
 		ptr := C.return_progress_function()
 		if err := newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr)); err == nil {
@@ -164,7 +165,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) error {
 
 	case opt == OPT_HEADERFUNCTION:
 		fun := param.(func([]byte, interface{}) bool)
-		curl.headerFunction = fun
+		curl.headerFunction = &fun
 
 		ptr := C.return_header_function()
 		if err := newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr)); err == nil {
@@ -176,7 +177,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) error {
 
 	case opt == OPT_WRITEFUNCTION:
 		fun := param.(func([]byte, interface{}) bool)
-		curl.writeFunction = fun
+		curl.writeFunction = &fun
 
 		ptr := C.return_write_function()
 		if err := newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr)); err == nil {

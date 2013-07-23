@@ -47,12 +47,12 @@ func goNilInterface() interface{} {
 
 // callback functions
 //export goCallWriteFunctionCallback
-func goCallWriteFunctionCallback(f func([]byte, interface{}) bool,
+func goCallWriteFunctionCallback(f *func([]byte, interface{}) bool,
 	ptr *C.char,
 	size C.size_t,
 	userdata interface{}) uintptr {
 	buf := C.GoBytes(unsafe.Pointer(ptr), C.int(size))
-	ok := f(buf, userdata)
+	ok := (*f)(buf, userdata)
 	if ok {
 		return uintptr(size)
 	}
@@ -61,11 +61,11 @@ func goCallWriteFunctionCallback(f func([]byte, interface{}) bool,
 }
 
 //export goCallProgressCallback
-func goCallProgressCallback(f func(float64, float64, float64, float64, interface{}) bool,
+func goCallProgressCallback(f *func(float64, float64, float64, float64, interface{}) bool,
 	userdata interface{},
 	dltotal, dlnow, ultotal, ulnow C.double) int {
 	// fdltotal, fdlnow, fultotal, fulnow
-	ok := f(float64(dltotal), float64(dlnow), float64(ultotal), float64(ulnow), userdata)
+	ok := (*f)(float64(dltotal), float64(dlnow), float64(ultotal), float64(ulnow), userdata)
 	// non-zero va lue will cause libcurl to abort the transfer and return Error
 	if ok {
 		return 0
@@ -74,13 +74,13 @@ func goCallProgressCallback(f func(float64, float64, float64, float64, interface
 }
 
 //export goCallReadFunctionCallback
-func goCallReadFunctionCallback(f func([]byte, interface{}) int,
+func goCallReadFunctionCallback(f *func([]byte, interface{}) int,
 	ptr *C.char,
 	size C.size_t,
 	userdata interface{}) uintptr {
 	// TODO code cleanup
 	buf := C.GoBytes(unsafe.Pointer(ptr), C.int(size))
-	ret := f(buf, userdata)
+	ret := (*f)(buf, userdata)
 	str := C.CString(string(buf))
 	defer C.free(unsafe.Pointer(str))
 	if C.memcpy(unsafe.Pointer(ptr), unsafe.Pointer(str), C.size_t(ret)) == nil {
