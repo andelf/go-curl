@@ -63,7 +63,7 @@ func goCallWriteFunctionCallback(f *func([]byte, interface{}) bool,
 //export goCallProgressCallback
 func goCallProgressCallback(f *func(float64, float64, float64, float64, interface{}) bool,
 	userdata interface{},
-	dltotal, dlnow, ultotal, ulnow C.double) int {
+	dltotal, dlnow, ultotal, ulnow float32) int {
 	// fdltotal, fdlnow, fultotal, fulnow
 	ok := (*f)(float64(dltotal), float64(dlnow), float64(ultotal), float64(ulnow), userdata)
 	// non-zero va lue will cause libcurl to abort the transfer and return Error
