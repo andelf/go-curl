@@ -6,7 +6,7 @@ import (
 
 func TestVersionInfo(t *testing.T) {
 	info := VersionInfo(VERSION_FIRST)
-	expectedProtocols := []string{"dict", "file", "ftp", "ftps", "gopher", "http", "https", "imap", "imaps", "ldap", "ldaps", "pop3", "pop3s", "rtmp", "rtsp", "smtp", "smtps", "telnet", "tftp"}
+	expectedProtocols := []string{"dict", "file", "ftp", "ftps", "gopher", "http", "https", "imap", "imaps", "ldap", "ldaps", "pop3", "pop3s", "rtmp", "rtsp", "smtp", "smtps", "telnet", "tftp", "scp", "sftp"}
 	protocols := info.Protocols
 	for _, protocol := range protocols {
 		found := false
