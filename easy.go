@@ -357,6 +357,10 @@ func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err error) {
 	return nil, nil
 }
 
+func (curl *CURL) GetHandle() (unsafe.Pointer) {
+	return curl.handle
+}
+
 // A multipart/formdata HTTP POST form
 type Form struct {
 	head, last *C.struct_curl_httppost
