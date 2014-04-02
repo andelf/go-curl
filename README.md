@@ -1,6 +1,8 @@
 go-curl
 =======
 
+[![Build Status](https://secure.travis-ci.org/andelf/go-curl.png?branch=master)](http://travis-ci.org/andelf/go-curl)
+
 my golang libcurl(curl) binding.
 
 See more examples in ./examples/ directory~!
