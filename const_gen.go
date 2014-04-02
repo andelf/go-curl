@@ -134,6 +134,7 @@ const (
 const (
 	OPT_ENCODING                  = C.CURLOPT_ENCODING
 	OPT_FILE                      = C.CURLOPT_FILE
+	OPT_URL                       = C.CURLOPT_URL
 	OPT_PORT                      = C.CURLOPT_PORT
 	OPT_PROXY                     = C.CURLOPT_PROXY
 	OPT_USERPWD                   = C.CURLOPT_USERPWD
@@ -405,3 +406,5 @@ const (
 	INFO_LASTONE              = C.CURLINFO_LASTONE
 	INFO_HTTP_CODE            = C.CURLINFO_HTTP_CODE
 )
+
+// generated ends

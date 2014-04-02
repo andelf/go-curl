@@ -8,7 +8,7 @@ import re
 opts = []
 codes = []
 infos = []
-pattern = re.compile(r'CINIT\((.*?), (LONG|OBJECTPOINT|FUNCTIONPOINT|OFF_T), (\d+)\)')
+pattern = re.compile(r'CINIT\((.*?),\s+(LONG|OBJECTPOINT|FUNCTIONPOINT|OFF_T),\s+(\d+)\)')
 pattern2 = re.compile('^\s+(CURLE_[A-Z_0-9]+),')
 pattern3 = re.compile('^\s+(CURLINFO_[A-Z_0-9]+)\s+=')
 for line in open("./curl/include/curl/curl.h"):
