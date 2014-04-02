@@ -10,12 +10,28 @@ static CURLMcode curl_multi_setopt_long(CURLM *handle, CURLMoption option, long 
 static CURLMcode curl_multi_setopt_pointer(CURLM *handle, CURLMoption option, void *parameter) {
   return curl_multi_setopt(handle, option, parameter);
 }
+static CURLMcode curl_multi_fdset_pointer(CURLM *handle,
+                            void *read_fd_set,
+                            void *write_fd_set,
+                            void *exc_fd_set,
+                            void *max_fd)
+{
+  return curl_multi_fdset(handle, read_fd_set, write_fd_set, exc_fd_set, max_fd);
+}                            
+static CURLMsg *curl_multi_info_read_pointer(CURLM *handle, void *msgs_in_queue)
+{
+  return curl_multi_info_read(handle, msgs_in_queue);
+}                            
 */
 import "C"
 
-import "unsafe"
+import (
+		"unsafe"
+		"syscall"
+)
 
 type CurlMultiError C.CURLMcode
+type CurlMultiMsg	C.CURLMSG
 
 func (e CurlMultiError) Error() string {
 	// ret is const char*, no need to free
@@ -31,8 +47,25 @@ func newCurlMultiError(errno C.CURLMcode) error {
 	return CurlMultiError(errno)
 }
 
+func newCURLMessage(message *C.CURLMsg) (msg *CURLMessage){
+	if message == nil {
+		return nil
+	}
+	msg = new(CURLMessage)
+	msg.Msg = CurlMultiMsg(message.msg)
+	msg.Easy_handle = &CURL{handle: message.easy_handle}
+	msg.Data = message.data
+	return msg 
+}
+
 type CURLM struct {
 	handle unsafe.Pointer
+}
+
+type CURLMessage struct {
+	Msg CurlMultiMsg
+	Easy_handle *CURL
+	Data [8]byte
 }
 
 // curl_multi_init - create a multi handle
@@ -103,4 +136,21 @@ func (mcurl *CURLM) Setopt(opt int, param interface{}) error {
 	return nil
 }
 
-// TODO curl_multi_info_read
+func (mcurl *CURLM) Fdset(read_fd_set *syscall.FdSet,
+						  write_fd_set *syscall.FdSet,
+						  exc_fd_set *syscall.FdSet,
+						  max_fd *int32) (error) {
+	p := mcurl.handle
+	read := unsafe.Pointer(read_fd_set)
+	write := unsafe.Pointer(write_fd_set)
+	exc := unsafe.Pointer(exc_fd_set)
+	max := unsafe.Pointer(max_fd)
+	return newCurlMultiError(C.curl_multi_fdset_pointer(p, read, write,
+							 exc, max))
+}
+
+func (mcurl *CURLM) Info_read(msgs_in_queue *int32) (*CURLMessage) {
+	p := mcurl.handle
+	left := unsafe.Pointer(msgs_in_queue)	
+	return newCURLMessage(C.curl_multi_info_read_pointer(p, left))
+}
