@@ -14,11 +14,11 @@ static CURLMcode curl_multi_fdset_pointer(CURLM *handle,
                             void *read_fd_set,
                             void *write_fd_set,
                             void *exc_fd_set,
-                            void *max_fd)
+                            int *max_fd)
 {
   return curl_multi_fdset(handle, read_fd_set, write_fd_set, exc_fd_set, max_fd);
 }                            
-static CURLMsg *curl_multi_info_read_pointer(CURLM *handle, void *msgs_in_queue)
+static CURLMsg *curl_multi_info_read_pointer(CURLM *handle, int *msgs_in_queue)
 {
   return curl_multi_info_read(handle, msgs_in_queue);
 }                            
@@ -136,21 +136,19 @@ func (mcurl *CURLM) Setopt(opt int, param interface{}) error {
 	return nil
 }
 
-func (mcurl *CURLM) Fdset(read_fd_set *syscall.FdSet,
-						  write_fd_set *syscall.FdSet,
-						  exc_fd_set *syscall.FdSet,
-						  max_fd *int32) (error) {
+func (mcurl *CURLM) Fdset(rset, wset, eset *syscall.FdSet) (int, error) {
 	p := mcurl.handle
-	read := unsafe.Pointer(read_fd_set)
-	write := unsafe.Pointer(write_fd_set)
-	exc := unsafe.Pointer(exc_fd_set)
-	max := unsafe.Pointer(max_fd)
-	return newCurlMultiError(C.curl_multi_fdset_pointer(p, read, write,
-							 exc, max))
+	read := unsafe.Pointer(rset)
+	write := unsafe.Pointer(wset)
+	exc := unsafe.Pointer(eset)
+	maxfd := C.int(-1)
+	err := newCurlMultiError(C.curl_multi_fdset_pointer(p, read, write,
+							 exc, &maxfd))
+	return int(maxfd), err
 }
 
-func (mcurl *CURLM) Info_read(msgs_in_queue *int32) (*CURLMessage) {
+func (mcurl *CURLM) Info_read() (*CURLMessage, int) {
 	p := mcurl.handle
-	left := unsafe.Pointer(msgs_in_queue)	
-	return newCURLMessage(C.curl_multi_info_read_pointer(p, left))
+	left := C.int(0)
+  	return newCURLMessage(C.curl_multi_info_read_pointer(p, &left)), int(left)
 }
