@@ -42,7 +42,6 @@ func FD_ISSET(sysfd int, set *syscall.FdSet) bool {
 func main() {
     var (
             rset, wset, eset syscall.FdSet
-            max_fd int32
             still_running, curl_timeout int = 0, 0
             err error
     )
@@ -81,7 +80,7 @@ func main() {
        		}
        	}
 
-        err = mh.Fdset(&rset, &wset, &eset, &max_fd)
+	max_fd, err := mh.Fdset(&rset, &wset, &eset)
         if err != nil {
             fmt.Printf("Error FDSET: %s\n", err)
         }
