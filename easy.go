@@ -70,6 +70,7 @@ import (
 	"unsafe"
 )
 
+type CurlInfo C.CURLINFO
 type CurlError C.CURLcode
 
 func (e CurlError) Error() string {
@@ -318,31 +319,32 @@ func (curl *CURL) Unescape(url string) string {
 }
 
 // curl_easy_getinfo - extract information from a curl handle
-func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err error) {
+func (curl *CURL) Getinfo(info CurlInfo) (ret interface{}, err error) {
 	p := curl.handle
-	switch info & C.CURLINFO_TYPEMASK {
+	cInfo := C.CURLINFO(info)
+	switch cInfo & C.CURLINFO_TYPEMASK {
 	case C.CURLINFO_STRING:
 		a_string := C.CString("")
 		defer C.free(unsafe.Pointer(a_string))
-		err := newCurlError(C.curl_easy_getinfo_string(p, info, &a_string))
+		err := newCurlError(C.curl_easy_getinfo_string(p, cInfo, &a_string))
 		ret := C.GoString(a_string)
 		debugf("Getinfo %s", ret)
 		return ret, err
 	case C.CURLINFO_LONG:
 		a_long := C.long(-1)
-		err := newCurlError(C.curl_easy_getinfo_long(p, info, &a_long))
+		err := newCurlError(C.curl_easy_getinfo_long(p, cInfo, &a_long))
 		ret := int(a_long)
 		debugf("Getinfo %s", ret)
 		return ret, err
 	case C.CURLINFO_DOUBLE:
 		a_double := C.double(0.0)
-		err := newCurlError(C.curl_easy_getinfo_double(p, info, &a_double))
+		err := newCurlError(C.curl_easy_getinfo_double(p, cInfo, &a_double))
 		ret := float64(a_double)
 		debugf("Getinfo %s", ret)
 		return ret, err
 	case C.CURLINFO_SLIST: // need fix
 		a_ptr_slist := new(_Ctype_struct_curl_slist)
-		err := newCurlError(C.curl_easy_getinfo_slist(p, info, a_ptr_slist))
+		err := newCurlError(C.curl_easy_getinfo_slist(p, cInfo, a_ptr_slist))
 		ret := []string{}
 		for a_ptr_slist != nil {
 			debugf("Getinfo %s %v", C.GoString(a_ptr_slist.data), a_ptr_slist.next)
@@ -357,7 +359,7 @@ func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err error) {
 	return nil, nil
 }
 
-func (curl *CURL) GetHandle() (unsafe.Pointer) {
+func (curl *CURL) GetHandle() unsafe.Pointer {
 	return curl.handle
 }
 
