@@ -9,6 +9,7 @@ def version_symbol(ver):
     opts = []
     codes = []
     infos = []
+    vers = []
     pattern = re.compile(r'CINIT\((.*?), (LONG|OBJECTPOINT|FUNCTIONPOINT|OFF_T), (\d+)\)')
     pattern2 = re.compile('^\s+(CURLE_[A-Z_0-9]+),')
     pattern3 = re.compile('^\s+(CURLINFO_[A-Z_0-9]+)\s+=')
@@ -37,7 +38,11 @@ def version_symbol(ver):
             if '0x' not in i[2]:    # :(
                 infos.append(i[1])
 
-    return opts, codes, infos
+        if line.startswith('#define CURL_VERSION_'):
+            i = line.split()
+            vers.append(i[1])
+
+    return opts, codes, infos, vers
 
 
 versions = """
@@ -128,7 +133,7 @@ if __name__ == '__main__':
     for ver in versions:
         minor, patch = map(int, ver.split("_")[-2:])
 
-        opts, codes, infos = curr = version_symbol(ver)
+        opts, codes, infos, vers = curr = version_symbol(ver)
 
         for o in last[0]:
             if o not in opts:
@@ -139,6 +144,9 @@ if __name__ == '__main__':
         for i in last[2]:
             if i not in infos:
                 result.append("#define {} 0".format(i)) # 0 for nil
+        for v in last[3]:
+            if v not in vers:
+                result.append("#define {} 0".format(v)) # 0 for nil
 
         result.append("#if (LIBCURL_VERSION_MINOR == {} && LIBCURL_VERSION_PATCH < {}) || LIBCURL_VERSION_MINOR < {} ".format(minor, patch, minor))
 
