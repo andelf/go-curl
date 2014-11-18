@@ -47,3 +47,15 @@ func TestCallbackFunction(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestEscape(t *testing.T) {
+	easy := EasyInit()
+	defer easy.Cleanup()
+
+	payload := `payload={"msg": "First line\nSecond Line"}`
+	expected := `payload%3D%7B%22msg%22%3A%20%22First%20line%5CnSecond%20Line%22%7D`
+	result := easy.Escape(payload)
+	if result != expected {
+		t.Errorf("escaped output should be %q and is %q.", expected, result)
+	}
+}
