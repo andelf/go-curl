@@ -73,6 +73,16 @@ import (
 type CurlInfo C.CURLINFO
 type CurlError C.CURLcode
 
+type CurlString *C.char
+
+func NewCurlString(s string) CurlString {
+	return CurlString(unsafe.Pointer(C.CString(s)))
+}
+
+func FreeCurlString(s CurlString) {
+	C.free(unsafe.Pointer(s))
+}
+
 func (e CurlError) Error() string {
 	// ret is const char*, no need to free
 	ret := C.curl_easy_strerror(C.CURLcode(e))
@@ -96,12 +106,14 @@ type CURL struct {
 	fnmatchFunction               *func(string, string, interface{}) int
 	// callback datas
 	headerData, writeData, readData, progressData, fnmatchData *interface{}
+	// list of C allocs
+	mallocAllocs []*C.char
 }
 
 // curl_easy_init - Start a libcurl easy session
 func EasyInit() *CURL {
 	p := C.curl_easy_init()
-	return &CURL{handle: p} // other field defaults to nil
+	return &CURL{handle: p, mallocAllocs: make([]*C.char, 0)} // other field defaults to nil
 }
 
 // curl_easy_duphandle - Clone a libcurl session handle
@@ -114,6 +126,7 @@ func (curl *CURL) Duphandle() *CURL {
 func (curl *CURL) Cleanup() {
 	p := curl.handle
 	C.curl_easy_cleanup(p)
+	curl.MallocFreeAfter(0)
 }
 
 // curl_easy_setopt - set options for a curl easy handle
@@ -212,16 +225,33 @@ func (curl *CURL) Setopt(opt int, param interface{}) error {
 	case opt >= C.CURLOPTTYPE_OBJECTPOINT:
 		switch t := param.(type) {
 		case string:
-			// FIXME: memory leak, some opt needs we hold a c string till perform()
-			// TODO: We can add a []unsafe.Poionter to Curl struct and do cleanup in Cleanup()
 			ptr := C.CString(t)
-			// defer C.free(unsafe.Pointer(ptr))
+			curl.mallocAddPtr(ptr)
+			return newCurlError(C.curl_easy_setopt_string(p, C.CURLoption(opt), ptr))
+		case CurlString:
+			ptr := (*C.char)(t)
 			return newCurlError(C.curl_easy_setopt_string(p, C.CURLoption(opt), ptr))
 		case []string:
 			if len(t) > 0 {
-				a_slist := C.curl_slist_append(nil, C.CString(t[0]))
+				ptr := C.CString(t[0])
+				curl.mallocAddPtr(ptr)
+				a_slist := C.curl_slist_append(nil, ptr)
 				for _, s := range t[1:] {
-					a_slist = C.curl_slist_append(a_slist, C.CString(s))
+					ptr := C.CString(s)
+					curl.mallocAddPtr(ptr)
+					a_slist = C.curl_slist_append(a_slist, ptr)
+				}
+				return newCurlError(C.curl_easy_setopt_slist(p, C.CURLoption(opt), a_slist))
+			} else {
+				return newCurlError(C.curl_easy_setopt_slist(p, C.CURLoption(opt), nil))
+			}
+		case []CurlString:
+			if len(t) > 0 {
+				ptr := (*C.char)(t[0])
+				a_slist := C.curl_slist_append(nil, ptr)
+				for _, s := range t[1:] {
+					ptr := (*C.char)(s)
+					a_slist = C.curl_slist_append(a_slist, ptr)
 				}
 				return newCurlError(C.curl_easy_setopt_slist(p, C.CURLoption(opt), a_slist))
 			} else {
@@ -361,6 +391,23 @@ func (curl *CURL) Getinfo(info CurlInfo) (ret interface{}, err error) {
 
 func (curl *CURL) GetHandle() unsafe.Pointer {
 	return curl.handle
+}
+
+func (curl *CURL) MallocGetPos() int {
+	return len(curl.mallocAllocs)
+}
+
+func (curl *CURL) MallocFreeAfter(from int) {
+	l := len(curl.mallocAllocs)
+	for idx := from; idx < l; idx++ {
+		C.free(unsafe.Pointer(curl.mallocAllocs[idx]))
+		curl.mallocAllocs[idx] = nil
+	}
+	curl.mallocAllocs = curl.mallocAllocs[0:from]
+}
+
+func (curl *CURL) mallocAddPtr(ptr *C.char) {
+	curl.mallocAllocs = append(curl.mallocAllocs, ptr)
 }
 
 // A multipart/formdata HTTP POST form
