@@ -62,10 +62,11 @@ type CURLM struct {
 	handle unsafe.Pointer
 }
 
+var dummy unsafe.Pointer
 type CURLMessage struct {
 	Msg CurlMultiMsg
 	Easy_handle *CURL
-	Data [8]byte
+	Data [unsafe.Sizeof(dummy)]byte
 }
 
 // curl_multi_init - create a multi handle
