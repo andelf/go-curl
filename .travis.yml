@@ -1,8 +1,6 @@
 language: go
 go:
-  - 1.1.2
-  - 1.2
-  - tip
+  - 1.5.1
 before_install:
   - sudo apt-get update -qq > apt-get.out 2>&1  || (cat apt-get.out && exit 1)
 install: go build -x -v
