@@ -16,7 +16,7 @@ static int _FD_ISSET (int sysfd, void *set) {
 import "C"
 
 import (
-	curl "github.com/Pyrrvs/go-curl"
+	curl "github.com/andelf/go-curl"
 	"syscall"
 	"unsafe"
 	"fmt"
