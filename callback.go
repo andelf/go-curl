@@ -14,7 +14,7 @@ import (
 
 //export goCallHeaderFunction
 func goCallHeaderFunction(ptr *C.char, size C.size_t, ctx unsafe.Pointer) uintptr {
-	curl := (*CURL)(ctx)
+	curl := context_map[uintptr(ctx)]
 	buf := C.GoBytes(unsafe.Pointer(ptr), C.int(size))
 	if (*curl.headerFunction)(buf, curl.headerData) {
 		return uintptr(size)
