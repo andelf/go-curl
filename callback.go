@@ -24,7 +24,7 @@ func goCallHeaderFunction(ptr *C.char, size C.size_t, ctx unsafe.Pointer) uintpt
 
 //export goCallWriteFunction
 func goCallWriteFunction(ptr *C.char, size C.size_t, ctx unsafe.Pointer) uintptr {
-	curl := context_map[uintptr(ctx)]
+	curl := context_map.Get(uintptr(ctx))
 	buf := C.GoBytes(unsafe.Pointer(ptr), C.int(size))
 	if (*curl.writeFunction)(buf, curl.writeData) {
 		return uintptr(size)
@@ -34,7 +34,7 @@ func goCallWriteFunction(ptr *C.char, size C.size_t, ctx unsafe.Pointer) uintptr
 
 //export goCallProgressFunction
 func goCallProgressFunction(dltotal, dlnow, ultotal, ulnow C.double, ctx unsafe.Pointer) int {
-	curl := context_map[uintptr(ctx)]
+	curl := context_map.Get(uintptr(ctx))
 	if (*curl.progressFunction)(float64(dltotal), float64(dlnow),
 		                 float64(ultotal), float64(ulnow),
 		                 curl.progressData) {
@@ -45,7 +45,7 @@ func goCallProgressFunction(dltotal, dlnow, ultotal, ulnow C.double, ctx unsafe.
 
 //export goCallReadFunction
 func goCallReadFunction(ptr *C.char, size C.size_t, ctx unsafe.Pointer) uintptr {
-	curl := context_map[uintptr(ctx)]
+	curl := context_map.Get(uintptr(ctx))
 	buf := C.GoBytes(unsafe.Pointer(ptr), C.int(size))
 	ret := (*curl.readFunction)(buf, curl.readData)
 	str := C.CString(string(buf))

@@ -67,6 +67,7 @@ import (
 	"mime"
 	"path"
 	"unsafe"
+	"sync"
 )
 
 type CurlInfo C.CURLINFO
@@ -109,13 +110,42 @@ type CURL struct {
 	mallocAllocs []*C.char
 }
 
-var context_map = make(map[uintptr]*CURL)
+// concurrent safe context map
+type contextMap struct {
+	items map[uintptr]*CURL
+	sync.RWMutex
+}
+
+func (c *contextMap) Set(k uintptr, v *CURL) {
+	c.Lock()
+	defer c.Unlock()
+
+	c.items[k] = v
+}
+
+func (c *contextMap) Get(k uintptr) *CURL {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.items[k]
+}
+
+func (c *contextMap) Delete(k uintptr) {
+	c.Lock()
+	defer c.Unlock()
+
+	delete(c.items, k)
+}
+
+var context_map = &contextMap {
+	items: make(map[uintptr]*CURL),
+}
 
 // curl_easy_init - Start a libcurl easy session
 func EasyInit() *CURL {
 	p := C.curl_easy_init()
 	c := &CURL{handle: p, mallocAllocs: make([]*C.char, 0)} // other field defaults to nil
-	context_map[uintptr(p)] = c
+	context_map.Set(uintptr(p), c)
 	return c
 }
 
@@ -123,7 +153,7 @@ func EasyInit() *CURL {
 func (curl *CURL) Duphandle() *CURL {
 	p := C.curl_easy_duphandle(curl.handle)
 	c := &CURL{handle: p}
-	context_map[uintptr(p)] = c
+	context_map.Set(uintptr(p), c)
 	return c
 }
 
@@ -132,7 +162,7 @@ func (curl *CURL) Cleanup() {
 	p := curl.handle
 	C.curl_easy_cleanup(p)
 	curl.MallocFreeAfter(0)
-	delete(context_map, uintptr(p))
+	context_map.Delete(uintptr(p))
 }
 
 // curl_easy_setopt - set options for a curl easy handle

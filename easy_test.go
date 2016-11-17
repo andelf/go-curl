@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"sync"
 )
 
 func setupTestServer(serverContent string) *httptest.Server {
@@ -58,4 +59,19 @@ func TestEscape(t *testing.T) {
 	if result != expected {
 		t.Errorf("escaped output should be %q and is %q.", expected, result)
 	}
+}
+
+func TestConcurrentInitAndCleanup(t *testing.T) {
+	c := 2
+	var wg sync.WaitGroup
+	wg.Add(c)
+	for i := 0; i < c; i++ {
+		go func() {
+			wg.Done()
+			easy := EasyInit()
+			defer easy.Cleanup()
+		}()
+	}
+
+	wg.Wait()
 }
