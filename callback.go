@@ -14,7 +14,7 @@ import (
 
 //export goCallHeaderFunction
 func goCallHeaderFunction(ptr *C.char, size C.size_t, ctx unsafe.Pointer) uintptr {
-	curl := context_map[uintptr(ctx)]
+	curl := context_map.Get(uintptr(ctx))
 	buf := C.GoBytes(unsafe.Pointer(ptr), C.int(size))
 	if (*curl.headerFunction)(buf, curl.headerData) {
 		return uintptr(size)
@@ -36,8 +36,8 @@ func goCallWriteFunction(ptr *C.char, size C.size_t, ctx unsafe.Pointer) uintptr
 func goCallProgressFunction(dltotal, dlnow, ultotal, ulnow C.double, ctx unsafe.Pointer) int {
 	curl := context_map.Get(uintptr(ctx))
 	if (*curl.progressFunction)(float64(dltotal), float64(dlnow),
-		                 float64(ultotal), float64(ulnow),
-		                 curl.progressData) {
+		float64(ultotal), float64(ulnow),
+		curl.progressData) {
 		return 0
 	}
 	return 1
