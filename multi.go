@@ -1,3 +1,8 @@
+// This file depends on functionality not available on Windows, hence we
+// must skip it. https://github.com/andelf/go-curl/issues/48
+
+// +build !windows
+
 package curl
 
 /*
