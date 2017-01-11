@@ -1,6 +1,8 @@
 package curl
 
 /*
+#cgo freebsd CFLAGS: -I/usr/local/include
+#cgo freebsd LDFLAGS: -L/usr/local/lib -lcurl
 #include <stdlib.h>
 #include <string.h>
 #include <curl/curl.h>
