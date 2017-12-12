@@ -30,46 +30,48 @@ def version_symbol(ver):
     infos = []
     vers = []
     auths = []
-    init_pattern = re.compile(r'CINIT\((.*?), (LONG|OBJECTPOINT|FUNCTIONPOINT|STRINGPOINT|OFF_T), (\d+)\)')
+    init_pattern = re.compile(r'CINIT\((.*?),\s*(LONG|OBJECTPOINT|FUNCTIONPOINT|STRINGPOINT|OFF_T),\s*(\d+)\)')
     error_pattern = re.compile('^\s+(CURLE_[A-Z_0-9]+),')
     info_pattern = re.compile('^\s+(CURLINFO_[A-Z_0-9]+)\s+=')
-    for line in open(os.path.join(CURL_GIT_PATH, 'include', 'curl', 'curl.h')):
-        match = init_pattern.findall(line)
-        if match:
-            opts.append("CURLOPT_" + match[0][0])
-        if line.startswith('#define CURLOPT_'):
-            o = line.split()
-            opts.append(o[1])
+    with open(os.path.join(CURL_GIT_PATH, 'include', 'curl', 'curl.h')) as f:
+        for line in f:
+            match = init_pattern.findall(line)
+            if match:
+                opts.append("CURLOPT_" + match[0][0])
+            if line.startswith('#define CURLOPT_'):
+                o = line.split()
+                opts.append(o[1])
 
-        if line.startswith('#define CURLAUTH_'):
-            a = line.split()
-            auths.append(a[1])
+            if line.startswith('#define CURLAUTH_'):
+                a = line.split()
+                auths.append(a[1])
 
-        match = error_pattern.findall(line)
-        if match:
-            codes.append(match[0])
+            match = error_pattern.findall(line)
+            if match:
+                codes.append(match[0])
 
-        if line.startswith('#define CURLE_'):
-            c = line.split()
-            codes.append(c[1])
+            if line.startswith('#define CURLE_'):
+                c = line.split()
+                codes.append(c[1])
 
-        match = info_pattern.findall(line)
-        if match:
-            infos.append(match[0])
+            match = info_pattern.findall(line)
+            if match:
+                infos.append(match[0])
 
-        if line.startswith('#define CURLINFO_'):
-            i = line.split()
-            if '0x' not in i[2]:  # :(
-                infos.append(i[1])
+            if line.startswith('#define CURLINFO_'):
+                i = line.split()
+                if '0x' not in i[2]:  # :(
+                    infos.append(i[1])
 
-        if line.startswith('#define CURL_VERSION_'):
-            i = line.split()
-            vers.append(i[1])
+            if line.startswith('#define CURL_VERSION_'):
+                i = line.split()
+                vers.append(i[1])
 
     return opts, codes, infos, vers, auths
 
 
 tags = os.popen("cd {} && git tag | grep -E 'curl-7_[0-9]+_[0-9]+$'".format(CURL_GIT_PATH)).read().split('\n')[:-1]
+tags = filter(lambda t: int(t.split('-')[1].split('_')[1]) >= 10, tags)
 versions = sorted(tags, key=lambda o: map(int, o.split('-')[1].split('_')), reverse=True)
 last = version_symbol("master")
 

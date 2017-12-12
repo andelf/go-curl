@@ -26,13 +26,13 @@ opts = []
 codes = []
 infos = []
 auths = []
-initPattern = re.compile(r'CINIT\((.*?),\s+(LONG|OBJECTPOINT|FUNCTIONPOINT|STRINGPOINT|OFF_T),\s+(\d+)\)')
-errorPattern = re.compile('^\s+(CURLE_[A-Z_0-9]+),')
-infoPattern = re.compile('^\s+(CURLINFO_[A-Z_0-9]+)\s+=')
+init_pattern = re.compile(r'CINIT\((.*?),\s+(LONG|OBJECTPOINT|FUNCTIONPOINT|STRINGPOINT|OFF_T),\s+(\d+)\)')
+error_pattern = re.compile('^\s+(CURLE_[A-Z_0-9]+),')
+info_pattern = re.compile('^\s+(CURLINFO_[A-Z_0-9]+)\s+=')
 
 with open(get_curl_path()) as f:
     for line in f:
-        match = initPattern.findall(line)
+        match = init_pattern.findall(line)
         if match:
             opts.append(match[0][0])
         if line.startswith('#define CURLOPT_'):
@@ -43,7 +43,7 @@ with open(get_curl_path()) as f:
             o = line.split()
             auths.append(o[1][9:])
 
-        match = errorPattern.findall(line)
+        match = error_pattern.findall(line)
         if match:
             codes.append(match[0])
 
@@ -51,7 +51,7 @@ with open(get_curl_path()) as f:
             c = line.split()
             codes.append(c[1])
 
-        match = infoPattern.findall(line)
+        match = info_pattern.findall(line)
         if match:
             infos.append(match[0])
 
