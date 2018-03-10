@@ -70,7 +70,6 @@ import (
 	"sync"
 )
 
-type CurlInfo C.CURLINFO
 type CurlError C.CURLcode
 
 type CurlString *C.char
@@ -381,7 +380,7 @@ func (curl *CURL) Unescape(url string) string {
 }
 
 // curl_easy_getinfo - extract information from a curl handle
-func (curl *CURL) Getinfo(info CurlInfo) (ret interface{}, err error) {
+func (curl *CURL) Getinfo(info int) (ret interface{}, err error) {
 	p := curl.handle
 	cInfo := C.CURLINFO(info)
 	switch cInfo & C.CURLINFO_TYPEMASK {
