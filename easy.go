@@ -66,8 +66,8 @@ import (
 	"fmt"
 	"mime"
 	"path"
-	"unsafe"
 	"sync"
+	"unsafe"
 )
 
 type CurlInfo C.CURLINFO
@@ -137,7 +137,7 @@ func (c *contextMap) Delete(k uintptr) {
 	delete(c.items, k)
 }
 
-var context_map = &contextMap {
+var context_map = &contextMap{
 	items: make(map[uintptr]*CURL),
 }
 
