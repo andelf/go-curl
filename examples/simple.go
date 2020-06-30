@@ -9,6 +9,7 @@ func main() {
 	defer easy.Cleanup()
 	if easy != nil {
 		easy.Setopt(curl.OPT_URL, "http://www.google.com/")
+		easy.Setopt(curl.OPT_SSLVERSION, curl.SSLVERSION_TLSv1_3)
 		easy.Perform()
 	}
 }
