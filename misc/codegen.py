@@ -26,6 +26,7 @@ opts = []
 codes = []
 infos = []
 auths = []
+protos = []
 init_pattern = re.compile(r'CINIT\((.*?),\s+(LONG|OBJECTPOINT|FUNCTIONPOINT|STRINGPOINT|OFF_T),\s+(\d+)\)')
 error_pattern = re.compile('^\s+(CURLE_[A-Z_0-9]+),')
 info_pattern = re.compile('^\s+(CURLINFO_[A-Z_0-9]+)\s+=')
@@ -42,6 +43,10 @@ with open(get_curl_path()) as f:
         if line.startswith('#define CURLAUTH_'):
             o = line.split()
             auths.append(o[1][9:])
+
+        if line.startswith('#define CURLPROTO_'):
+            o = line.split()
+            protos.append(o[1][10:])
 
         match = error_pattern.findall(line)
         if match:
@@ -89,6 +94,11 @@ const (
 {auth_part}
 )
 
+// Proto
+const (
+{proto_part}
+)
+
 // generated ends
 """
 
@@ -115,6 +125,12 @@ for a in auths:
     auth_part.append("\tAUTH_{0:<25} = C.CURLAUTH_{0} & (1<<32 - 1)".format(a))
 
 auth_part = '\n'.join(auth_part)
+
+proto_part = []
+for p in protos:
+    proto_part.append("\tPROTO_{0:<25} = C.CURLPROTO_{0} & (1<<32 - 1)".format(p))
+
+proto_part = '\n'.join(proto_part)
 
 with open('./const_gen.go', 'w') as fp:
     fp.write(template.format(**locals()))
