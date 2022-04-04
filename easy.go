@@ -34,6 +34,9 @@ static CURLcode curl_easy_getinfo_double(CURL *curl, CURLINFO info, double *p) {
 static CURLcode curl_easy_getinfo_slist(CURL *curl, CURLINFO info, struct curl_slist **p) {
  return curl_easy_getinfo(curl, info, p);
 }
+static CURLcode curl_easy_getinfo_certinfo(CURL *curl, CURLINFO info, struct curl_certinfo **p) {
+ return curl_easy_getinfo(curl, info, p);
+}
 
 static CURLFORMcode curl_formadd_name_content_length(
     struct curl_httppost **httppost, struct curl_httppost **last_post, char *name, char *content, int length) {
@@ -66,8 +69,8 @@ import (
 	"fmt"
 	"mime"
 	"path"
-	"unsafe"
 	"sync"
+	"unsafe"
 )
 
 type CurlInfo C.CURLINFO
@@ -137,7 +140,7 @@ func (c *contextMap) Delete(k uintptr) {
 	delete(c.items, k)
 }
 
-var context_map = &contextMap {
+var context_map = &contextMap{
 	items: make(map[uintptr]*CURL),
 }
 
@@ -292,8 +295,8 @@ func (curl *CURL) Setopt(opt int, param interface{}) error {
 		default:
 			// It panics if v's Kind is not Chan, Func, Map, Ptr, Slice, or UnsafePointer.
 			// val := reflect.ValueOf(param)
-			//fmt.Printf("DEBUG(Setopt): param=%x\n", val.Pointer())
-			//println("DEBUG can addr =", val.Pointer(), "opt=", opt)
+			// fmt.Printf("DEBUG(Setopt): param=%x\n", val.Pointer())
+			// println("DEBUG can addr =", val.Pointer(), "opt=", opt)
 			// pass a pointer to GoInterface
 			return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt),
 				unsafe.Pointer(&param)))
@@ -384,6 +387,36 @@ func (curl *CURL) Unescape(url string) string {
 func (curl *CURL) Getinfo(info CurlInfo) (ret interface{}, err error) {
 	p := curl.handle
 	cInfo := C.CURLINFO(info)
+	if cInfo == C.CURLINFO_CERTINFO {
+		var certInfo *C.struct_curl_certinfo
+		err := newCurlError(C.curl_easy_getinfo_certinfo(p, cInfo, &certInfo))
+		if err != nil {
+			return nil, err
+		}
+		if certInfo == nil {
+			return nil, fmt.Errorf("nil certinfo")
+		}
+
+		certsCount := C.int(certInfo.num_of_certs)
+		certs := make([]string, certsCount)
+
+		nextCert := (**C.struct_curl_slist)(certInfo.certinfo)
+		for i := range certs {
+			certPtr := unsafe.Pointer(uintptr(unsafe.Pointer(nextCert)) + unsafe.Sizeof(nextCert)*uintptr(i))
+			certSlist := *(**C.struct_curl_slist)(certPtr)
+
+			var certData string
+			for certSlist != nil {
+				certData += C.GoString(certSlist.data) + "\n"
+				certSlist = certSlist.next
+			}
+
+			certs[i] = certData
+		}
+
+		return certs, nil
+	}
+
 	switch cInfo & C.CURLINFO_TYPEMASK {
 	case C.CURLINFO_STRING:
 		a_string := C.CString("")
@@ -405,7 +438,7 @@ func (curl *CURL) Getinfo(info CurlInfo) (ret interface{}, err error) {
 		debugf("Getinfo %s", ret)
 		return ret, err
 	case C.CURLINFO_SLIST:
-		a_ptr_slist := new(C.struct_curl_slist)
+		var a_ptr_slist *C.struct_curl_slist
 		err := newCurlError(C.curl_easy_getinfo_slist(p, cInfo, &a_ptr_slist))
 		ret := []string{}
 		for a_ptr_slist != nil {
