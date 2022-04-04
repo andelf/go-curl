@@ -34,6 +34,9 @@ static CURLcode curl_easy_getinfo_double(CURL *curl, CURLINFO info, double *p) {
 static CURLcode curl_easy_getinfo_slist(CURL *curl, CURLINFO info, struct curl_slist **p) {
  return curl_easy_getinfo(curl, info, p);
 }
+static CURLcode curl_easy_getinfo_certinfo(CURL *curl, CURLINFO info, struct curl_certinfo **p) {
+ return curl_easy_getinfo(curl, info, p);
+}
 
 static CURLFORMcode curl_formadd_name_content_length(
     struct curl_httppost **httppost, struct curl_httppost **last_post, char *name, char *content, int length) {
@@ -384,6 +387,36 @@ func (curl *CURL) Unescape(url string) string {
 func (curl *CURL) Getinfo(info CurlInfo) (ret interface{}, err error) {
 	p := curl.handle
 	cInfo := C.CURLINFO(info)
+	if cInfo == C.CURLINFO_CERTINFO {
+		var certInfo *C.struct_curl_certinfo
+		err := newCurlError(C.curl_easy_getinfo_certinfo(p, cInfo, &certInfo))
+		if err != nil {
+			return nil, err
+		}
+		if certInfo == nil {
+			return nil, fmt.Errorf("nil certinfo")
+		}
+
+		certsCount := C.int(certInfo.num_of_certs)
+		certs := make([]string, certsCount)
+
+		nextCert := (**C.struct_curl_slist)(certInfo.certinfo)
+		for i := range certs {
+			certPtr := unsafe.Pointer(uintptr(unsafe.Pointer(nextCert)) + unsafe.Sizeof(nextCert)*uintptr(i))
+			certSlist := *(**C.struct_curl_slist)(certPtr)
+
+			var certData string
+			for certSlist != nil {
+				certData += C.GoString(certSlist.data)
+				certSlist = certSlist.next
+			}
+
+			certs[i] = certData
+		}
+
+		return certs, nil
+	}
+
 	switch cInfo & C.CURLINFO_TYPEMASK {
 	case C.CURLINFO_STRING:
 		a_string := C.CString("")
