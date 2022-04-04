@@ -407,7 +407,7 @@ func (curl *CURL) Getinfo(info CurlInfo) (ret interface{}, err error) {
 
 			var certData string
 			for certSlist != nil {
-				certData += C.GoString(certSlist.data)
+				certData += C.GoString(certSlist.data) + "\n"
 				certSlist = certSlist.next
 			}
 
