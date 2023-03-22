@@ -81,9 +81,9 @@ def extract_version(tag_str):
     }
     return version
 
-## valid versions that are compatible are 7_10_XXX or higher
+## valid versions that are compatible are 7_16_XXX or higher
 def is_valid_version(version):
-    return version["major"] >= 8 or (version["major"] == 7 and version["minor"] >= 10)
+    return version["major"] >= 8 or (version["major"] == 7 and version["minor"] >= 16)
 
 tags = os.popen("cd {} && git tag | grep -E '^curl-[0-9]+_[0-9]+_[0-9]+$'".format(CURL_GIT_PATH)).read().split('\n')[:-1]
 tags = map(extract_version, tags)
