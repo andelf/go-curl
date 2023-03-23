@@ -3,6 +3,7 @@
 
 import os
 import re
+import code
 
 CURL_GIT_PATH = os.environ.get("CURL_GIT_PATH", './curl')
 
@@ -70,9 +71,24 @@ def version_symbol(ver):
     return opts, codes, infos, vers, auths
 
 
-tags = os.popen("cd {} && git tag | grep -E 'curl-7_[0-9]+_[0-9]+$'".format(CURL_GIT_PATH)).read().split('\n')[:-1]
-tags = filter(lambda t: int(t.split('-')[1].split('_')[1]) >= 10, tags)
-versions = sorted(tags, key=lambda o: map(int, o.split('-')[1].split('_')), reverse=True)
+def extract_version(tag_str):
+    result = re.search(r"curl-([0-9]+)_([0-9]+)_([0-9]+)", tag_str)
+    version = {
+      "major" : int(result.group(1)),
+      "minor" : int(result.group(2)),
+      "patch" : int(result.group(3)),
+      "version" : tag_str
+    }
+    return version
+
+## valid versions that are compatible are 7_16_XXX or higher
+def is_valid_version(version):
+    return version["major"] >= 8 or (version["major"] == 7 and version["minor"] >= 16)
+
+tags = os.popen("cd {} && git tag | grep -E '^curl-[0-9]+_[0-9]+_[0-9]+$'".format(CURL_GIT_PATH)).read().split('\n')[:-1]
+tags = map(extract_version, tags)
+tags = filter(is_valid_version, tags)
+versions = sorted(tags, key=lambda v: [v["major"], v["minor"], v["patch"]], reverse=True)
 last = version_symbol("master")
 
 template = """
@@ -86,9 +102,10 @@ result = [template]
 result_tail = ["/* generated ends */\n"]
 if __name__ == '__main__':
     for ver in versions:
-        minor, patch = map(int, ver.split("_")[-2:])
-
-        opts, codes, infos, vers, auths = curr = version_symbol(ver)
+        major = ver["major"]
+        minor = ver["minor"]
+        patch = ver["patch"]
+        opts, codes, infos, vers, auths = curr = version_symbol(ver["version"])
 
         for o in last[0]:
             if o not in opts:
@@ -110,7 +127,7 @@ if __name__ == '__main__':
             "#if (LIBCURL_VERSION_MINOR == {} && LIBCURL_VERSION_PATCH < {}) || LIBCURL_VERSION_MINOR < {} ".format(
                 minor, patch, minor))
 
-        result_tail.insert(0, "#endif /* 7.{}.{} */".format(minor, patch))
+        result_tail.insert(0, "#endif /* {}.{}.{} */".format(major, minor, patch))
 
         last = curr
 
