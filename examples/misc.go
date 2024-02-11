@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-	"reflect"
-	"../curl/_obj/curl"
+	curl "github.com/andelf/go-curl"
 	"os"
-	//	"dump"
+	"reflect"
 )
 
 const endl = "\n"
@@ -28,7 +27,7 @@ func main() {
 
 	// auto calculate port
 	// print("set port =>", ret.EasySetopt(curl.OPT_PORT, 6060), endl)
-
+	fmt.Printf("XXXX debug setopt %#v \n", ret.Setopt(30000, 19).Error())
 
 	print("set timeout =>", ret.Setopt(curl.OPT_TIMEOUT, 20), endl)
 

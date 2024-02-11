@@ -1,16 +1,21 @@
 go-curl
 =======
 
-my golang libcurl(curl) binding.
+[![Build Status](https://secure.travis-ci.org/andelf/go-curl.png?branch=master)](http://travis-ci.org/andelf/go-curl)
 
- * under active development
- * by andelf
+my golang libcurl(curl) binding.
 
 See more examples in ./examples/ directory~!
 
-Current Development Statue
+LICENSE
+-------
+
+go-curl is licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0.html).
+
+Current Development Status
 --------------------------
 
+ * currently stable
  * READ, WRITE, HEADER, PROGRESS function callback
  * a Multipart Form supports file uploading
  * Most curl_easy_setopt option
@@ -20,20 +25,20 @@ Current Development Statue
 How to Install
 --------------
 
-	$ goinstall github.com/andelf/go-curl/curl
+Make Sure You Have libcurl (and its develop headers, static/dynamic libs) installed!
 
+
+    $ go get -u github.com/andelf/go-curl
 
 Current Status
 --------------
 
  * Linux x64
-   * passed go release.r59 9022 (arch pacman)
-   * passed go release.r60 9481 (arch pacman)
-   * failed go release.r60.3 9516 (arch pacman, crosscall2: not defined)
-   * passed go weekly.2011-10-18 10143 (gcc, hg repo)
-   * passed go weekly.2011-10-18 10143 (clang, hg repo)
+   * passed go1 (ArchLinux)
  * Windows x86
-   * passed go release.r60.3 9516 (win7, mingw-gcc 4.5.2)
+   * passed go1 (win7, mingw-gcc 4.5.2, curl 7.22.0)
+ * Mac OS
+   * passed go1 (Mac OS X 10.7.3, curl 7.21.4)
 
 Sample Program
 --------------
@@ -43,7 +48,7 @@ package main
 
 import (
     "fmt"
-    "github.com/andelf/go-curl/curl"
+    curl "github.com/andelf/go-curl"
 )
 
 func main() {

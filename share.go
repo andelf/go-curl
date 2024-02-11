@@ -1,8 +1,8 @@
 package curl
 
 /*
-#cgo linux pkg-config: libcurl
 #include <curl/curl.h>
+
 static CURLSHcode curl_share_setopt_long(CURLSH *handle, CURLSHoption option, long parameter) {
   return curl_share_setopt(handle, option, parameter);
 }
@@ -11,6 +11,7 @@ static CURLSHcode curl_share_setopt_pointer(CURLSH *handle, CURLSHoption option,
 }
 */
 import "C"
+
 import "unsafe"
 
 // implement os.Error interface
@@ -23,7 +24,7 @@ func (e CurlShareError) Error() string {
 }
 
 func newCurlShareError(errno C.CURLSHcode) error {
-	if errno == C.CURLSHE_OK { // if nothing wrong
+	if errno == 0 { // if nothing wrong
 		return nil
 	}
 	return CurlShareError(errno)

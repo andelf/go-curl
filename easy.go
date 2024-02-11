@@ -1,10 +1,11 @@
 package curl
 
 /*
-#cgo linux pkg-config: libcurl
 #include <stdlib.h>
 #include <curl/curl.h>
 #include "callback.h"
+#include "compat.h"
+
 static CURLcode curl_easy_setopt_long(CURL *handle, CURLoption option, long parameter) {
   return curl_easy_setopt(handle, option, parameter);
 }
@@ -30,7 +31,7 @@ static CURLcode curl_easy_getinfo_long(CURL *curl, CURLINFO info, long *p) {
 static CURLcode curl_easy_getinfo_double(CURL *curl, CURLINFO info, double *p) {
  return curl_easy_getinfo(curl, info, p);
 }
-static CURLcode curl_easy_getinfo_slist(CURL *curl, CURLINFO info, struct curl_slist *p) {
+static CURLcode curl_easy_getinfo_slist(CURL *curl, CURLINFO info, struct curl_slist **p) {
  return curl_easy_getinfo(curl, info, p);
 }
 
@@ -62,14 +63,25 @@ static CURLFORMcode curl_formadd_name_file_type(
 import "C"
 
 import (
-	"unsafe"
-	"reflect"
 	"fmt"
-	"path"
 	"mime"
+	"path"
+	"unsafe"
+	"sync"
 )
 
+type CurlInfo C.CURLINFO
 type CurlError C.CURLcode
+
+type CurlString *C.char
+
+func NewCurlString(s string) CurlString {
+	return CurlString(unsafe.Pointer(C.CString(s)))
+}
+
+func FreeCurlString(s CurlString) {
+	C.free(unsafe.Pointer(s))
+}
 
 func (e CurlError) Error() string {
 	// ret is const char*, no need to free
@@ -88,34 +100,73 @@ func newCurlError(errno C.CURLcode) error {
 type CURL struct {
 	handle unsafe.Pointer
 	// callback functions, bool ret means ok or not
-	headerFunction, writeFunction func([]byte, interface{}) bool
-	readFunction                  func([]byte, interface{}) int // return num of bytes writed to buf
-	progressFunction              func(float64, float64, float64, float64, interface{}) bool
-	fnmatchFunction               func(string, string, interface{}) int
+	headerFunction, writeFunction *func([]byte, interface{}) bool
+	readFunction                  *func([]byte, interface{}) int // return num of bytes writed to buf
+	progressFunction              *func(float64, float64, float64, float64, interface{}) bool
+	fnmatchFunction               *func(string, string, interface{}) int
 	// callback datas
-	headerData, writeData, readData, progressData, fnmatchData *interface{}
+	headerData, writeData, readData, progressData, fnmatchData interface{}
+	// list of C allocs
+	mallocAllocs []*C.char
+}
+
+// concurrent safe context map
+type contextMap struct {
+	items map[uintptr]*CURL
+	sync.RWMutex
+}
+
+func (c *contextMap) Set(k uintptr, v *CURL) {
+	c.Lock()
+	defer c.Unlock()
+
+	c.items[k] = v
+}
+
+func (c *contextMap) Get(k uintptr) *CURL {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.items[k]
+}
+
+func (c *contextMap) Delete(k uintptr) {
+	c.Lock()
+	defer c.Unlock()
+
+	delete(c.items, k)
+}
+
+var context_map = &contextMap {
+	items: make(map[uintptr]*CURL),
 }
 
 // curl_easy_init - Start a libcurl easy session
 func EasyInit() *CURL {
 	p := C.curl_easy_init()
-	return &CURL{handle: p} // other field defaults to nil
+	c := &CURL{handle: p, mallocAllocs: make([]*C.char, 0)} // other field defaults to nil
+	context_map.Set(uintptr(p), c)
+	return c
 }
 
 // curl_easy_duphandle - Clone a libcurl session handle
 func (curl *CURL) Duphandle() *CURL {
-	p := curl.handle
-	return &CURL{handle: C.curl_easy_duphandle(p)}
+	p := C.curl_easy_duphandle(curl.handle)
+	c := &CURL{handle: p}
+	context_map.Set(uintptr(p), c)
+	return c
 }
 
 // curl_easy_cleanup - End a libcurl easy session
 func (curl *CURL) Cleanup() {
 	p := curl.handle
 	C.curl_easy_cleanup(p)
+	curl.MallocFreeAfter(0)
+	context_map.Delete(uintptr(p))
 }
 
 // curl_easy_setopt - set options for a curl easy handle
-// WARNING: afunction pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
+// WARNING: a function pointer is &fun, but function addr is reflect.ValueOf(fun).Pointer()
 func (curl *CURL) Setopt(opt int, param interface{}) error {
 	p := curl.handle
 	if param == nil {
@@ -125,62 +176,58 @@ func (curl *CURL) Setopt(opt int, param interface{}) error {
 	switch {
 	// not really set
 	case opt == OPT_READDATA: // OPT_INFILE
-		curl.readData = &param
+		curl.readData = param
 		return nil
 	case opt == OPT_PROGRESSDATA:
-		curl.progressData = &param
+		curl.progressData = param
 		return nil
 	case opt == OPT_HEADERDATA: // also known as OPT_WRITEHEADER
-		curl.headerData = &param
+		curl.headerData = param
 		return nil
 	case opt == OPT_WRITEDATA: // OPT_FILE
-		curl.writeData = &param
+		curl.writeData = param
 		return nil
 
 	case opt == OPT_READFUNCTION:
 		fun := param.(func([]byte, interface{}) int)
-		curl.readFunction = fun
+		curl.readFunction = &fun
 
 		ptr := C.return_read_function()
 		if err := newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr)); err == nil {
-			return newCurlError(C.curl_easy_setopt_pointer(p, OPT_READDATA,
-				unsafe.Pointer(reflect.ValueOf(curl).Pointer())))
+			return newCurlError(C.curl_easy_setopt_pointer(p, OPT_READDATA, unsafe.Pointer(curl.handle)))
 		} else {
 			return err
 		}
 
 	case opt == OPT_PROGRESSFUNCTION:
 		fun := param.(func(float64, float64, float64, float64, interface{}) bool)
-		curl.progressFunction = fun
+		curl.progressFunction = &fun
 
 		ptr := C.return_progress_function()
 		if err := newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr)); err == nil {
-			return newCurlError(C.curl_easy_setopt_pointer(p, OPT_PROGRESSDATA,
-				unsafe.Pointer(reflect.ValueOf(curl).Pointer())))
+			return newCurlError(C.curl_easy_setopt_pointer(p, OPT_PROGRESSDATA, unsafe.Pointer(curl.handle)))
 		} else {
 			return err
 		}
 
 	case opt == OPT_HEADERFUNCTION:
 		fun := param.(func([]byte, interface{}) bool)
-		curl.headerFunction = fun
+		curl.headerFunction = &fun
 
 		ptr := C.return_header_function()
 		if err := newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr)); err == nil {
-			return newCurlError(C.curl_easy_setopt_pointer(p, OPT_HEADERDATA,
-				unsafe.Pointer(reflect.ValueOf(curl).Pointer())))
+			return newCurlError(C.curl_easy_setopt_pointer(p, OPT_HEADERDATA, unsafe.Pointer(curl.handle)))
 		} else {
 			return err
 		}
 
 	case opt == OPT_WRITEFUNCTION:
 		fun := param.(func([]byte, interface{}) bool)
-		curl.writeFunction = fun
+		curl.writeFunction = &fun
 
 		ptr := C.return_write_function()
 		if err := newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), ptr)); err == nil {
-			return newCurlError(C.curl_easy_setopt_pointer(p, OPT_WRITEDATA,
-				unsafe.Pointer(reflect.ValueOf(curl).Pointer())))
+			return newCurlError(C.curl_easy_setopt_pointer(p, OPT_WRITEDATA, unsafe.Pointer(curl.handle)))
 		} else {
 			return err
 		}
@@ -191,7 +238,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) error {
 		ptr := post.head
 		return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt), unsafe.Pointer(ptr)))
 
-	case opt > C.CURLOPTTYPE_OFF_T:
+	case opt >= C.CURLOPTTYPE_OFF_T:
 		val := C.off_t(0)
 		switch t := param.(type) {
 		case int:
@@ -199,27 +246,44 @@ func (curl *CURL) Setopt(opt int, param interface{}) error {
 		case uint64:
 			val = C.off_t(t)
 		default:
-			panic("not supported OFF_T converstion")
+			panic("OFF_T conversion not supported")
 		}
 		return newCurlError(C.curl_easy_setopt_off_t(p, C.CURLoption(opt), val))
 
-	case opt > C.CURLOPTTYPE_FUNCTIONPOINT:
+	case opt >= C.CURLOPTTYPE_FUNCTIONPOINT:
 		// function pointer
-		panic("function poionter not implemented yet!")
+		panic("function pointer not implemented yet!")
 
-	case opt > C.CURLOPTTYPE_OBJECTPOINT:
+	case opt >= C.CURLOPTTYPE_OBJECTPOINT:
 		switch t := param.(type) {
 		case string:
-			// FIXME: memory leak, some opt needs we hold a c string till perform()
-			// TODO: We can add a []unsafe.Poionter to Curl struct and do cleanup in Cleanup()
 			ptr := C.CString(t)
-			// defer C.free(unsafe.Pointer(ptr))
+			curl.mallocAddPtr(ptr)
+			return newCurlError(C.curl_easy_setopt_string(p, C.CURLoption(opt), ptr))
+		case CurlString:
+			ptr := (*C.char)(t)
 			return newCurlError(C.curl_easy_setopt_string(p, C.CURLoption(opt), ptr))
 		case []string:
 			if len(t) > 0 {
-				a_slist := C.curl_slist_append(nil, C.CString(t[0]))
+				ptr := C.CString(t[0])
+				curl.mallocAddPtr(ptr)
+				a_slist := C.curl_slist_append(nil, ptr)
 				for _, s := range t[1:] {
-					a_slist = C.curl_slist_append(a_slist, C.CString(s))
+					ptr := C.CString(s)
+					curl.mallocAddPtr(ptr)
+					a_slist = C.curl_slist_append(a_slist, ptr)
+				}
+				return newCurlError(C.curl_easy_setopt_slist(p, C.CURLoption(opt), a_slist))
+			} else {
+				return newCurlError(C.curl_easy_setopt_slist(p, C.CURLoption(opt), nil))
+			}
+		case []CurlString:
+			if len(t) > 0 {
+				ptr := (*C.char)(t[0])
+				a_slist := C.curl_slist_append(nil, ptr)
+				for _, s := range t[1:] {
+					ptr := (*C.char)(s)
+					a_slist = C.curl_slist_append(a_slist, ptr)
 				}
 				return newCurlError(C.curl_easy_setopt_slist(p, C.CURLoption(opt), a_slist))
 			} else {
@@ -234,7 +298,7 @@ func (curl *CURL) Setopt(opt int, param interface{}) error {
 			return newCurlError(C.curl_easy_setopt_pointer(p, C.CURLoption(opt),
 				unsafe.Pointer(&param)))
 		}
-	case opt > C.CURLOPTTYPE_LONG:
+	case opt >= C.CURLOPTTYPE_LONG:
 		val := C.long(0)
 		switch t := param.(type) {
 		case int:
@@ -272,7 +336,6 @@ func (curl *CURL) Recv(buffer []byte) (int, error) {
 	n := C.size_t(0)
 	ret := C.curl_easy_recv(p, unsafe.Pointer(buf), C.size_t(buflen), &n)
 	return copy(buffer, C.GoStringN(buf, C.int(n))), newCurlError(ret)
-
 }
 
 // curl_easy_perform - Perform a file transfer
@@ -318,34 +381,35 @@ func (curl *CURL) Unescape(url string) string {
 }
 
 // curl_easy_getinfo - extract information from a curl handle
-func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err error) {
+func (curl *CURL) Getinfo(info CurlInfo) (ret interface{}, err error) {
 	p := curl.handle
-	switch info & C.CURLINFO_TYPEMASK {
+	cInfo := C.CURLINFO(info)
+	switch cInfo & C.CURLINFO_TYPEMASK {
 	case C.CURLINFO_STRING:
 		a_string := C.CString("")
 		defer C.free(unsafe.Pointer(a_string))
-		err := newCurlError(C.curl_easy_getinfo_string(p, info, &a_string))
+		err := newCurlError(C.curl_easy_getinfo_string(p, cInfo, &a_string))
 		ret := C.GoString(a_string)
-		print("debug (Getinfo) ", ret, "\n")
+		debugf("Getinfo %s", ret)
 		return ret, err
 	case C.CURLINFO_LONG:
 		a_long := C.long(-1)
-		err := newCurlError(C.curl_easy_getinfo_long(p, info, &a_long))
+		err := newCurlError(C.curl_easy_getinfo_long(p, cInfo, &a_long))
 		ret := int(a_long)
-		print("debug (Getinfo) ", ret, "\n")
+		debugf("Getinfo %s", ret)
 		return ret, err
 	case C.CURLINFO_DOUBLE:
 		a_double := C.double(0.0)
-		err := newCurlError(C.curl_easy_getinfo_double(p, info, &a_double))
+		err := newCurlError(C.curl_easy_getinfo_double(p, cInfo, &a_double))
 		ret := float64(a_double)
-		print("debug (Getinfo) ", ret, "\n")
+		debugf("Getinfo %s", ret)
 		return ret, err
-	case C.CURLINFO_SLIST: // need fix
-		a_ptr_slist := new(_Ctype_struct_curl_slist)
-		err := newCurlError(C.curl_easy_getinfo_slist(p, info, a_ptr_slist))
+	case C.CURLINFO_SLIST:
+		a_ptr_slist := new(C.struct_curl_slist)
+		err := newCurlError(C.curl_easy_getinfo_slist(p, cInfo, &a_ptr_slist))
 		ret := []string{}
 		for a_ptr_slist != nil {
-			print("!!debug (Getinfo) ", C.GoString(a_ptr_slist.data), a_ptr_slist.next, "\n")
+			debugf("Getinfo %s %v", C.GoString(a_ptr_slist.data), a_ptr_slist.next)
 			ret = append(ret, C.GoString(a_ptr_slist.data))
 			a_ptr_slist = a_ptr_slist.next
 		}
@@ -355,6 +419,27 @@ func (curl *CURL) Getinfo(info C.CURLINFO) (ret interface{}, err error) {
 	}
 	panic("not implemented yet!")
 	return nil, nil
+}
+
+func (curl *CURL) GetHandle() unsafe.Pointer {
+	return curl.handle
+}
+
+func (curl *CURL) MallocGetPos() int {
+	return len(curl.mallocAllocs)
+}
+
+func (curl *CURL) MallocFreeAfter(from int) {
+	l := len(curl.mallocAllocs)
+	for idx := from; idx < l; idx++ {
+		C.free(unsafe.Pointer(curl.mallocAllocs[idx]))
+		curl.mallocAllocs[idx] = nil
+	}
+	curl.mallocAllocs = curl.mallocAllocs[0:from]
+}
+
+func (curl *CURL) mallocAddPtr(ptr *C.char) {
+	curl.mallocAllocs = append(curl.mallocAllocs, ptr)
 }
 
 // A multipart/formdata HTTP POST form

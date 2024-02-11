@@ -3,8 +3,8 @@
 package main
 
 import (
-	"../curl/_obj/curl"
 	"fmt"
+	curl "github.com/andelf/go-curl"
 	"time"
 )
 
@@ -35,9 +35,9 @@ func main() {
 			return false
 		}
 		if started == 0 {
-			started = time.Seconds()
+			started = time.Now().Unix()
 		}
-		fmt.Printf("Downloaded: %3.2f%%, Speed: %.1fKiB/s \r", dlnow/dltotal*100, dlnow/1000/float64((time.Seconds()-started)))
+		fmt.Printf("Downloaded: %3.2f%%, Speed: %.1fKiB/s \r", dlnow/dltotal*100, dlnow/1000/float64((time.Now().Unix()-started)))
 		return true
 	})
 

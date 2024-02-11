@@ -1,9 +1,9 @@
 package main
 
 import (
-	"../curl/_obj/curl"
-	"time"
 	"fmt"
+	curl "github.com/andelf/go-curl"
+	"time"
 )
 
 const POST_DATA = "a_test_data_only"

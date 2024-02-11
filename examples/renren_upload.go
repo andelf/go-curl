@@ -2,10 +2,10 @@
 package main
 
 import (
-	"../curl/_obj/curl"
-	"time"
-	"regexp"
 	"fmt"
+	curl "github.com/andelf/go-curl"
+	"regexp"
+	"time"
 )
 
 func getUploadUrl() string {
@@ -55,7 +55,7 @@ func main() {
 
 	form := curl.NewForm()
 	form.Add("albumid", "452618633") // your album id
-	form.AddFile("theFile", "/path/to/your/image.jpg")
+	form.AddFile("theFile", "./test.jpg")
 	form.Add("description", "我就尝试下这段代码靠谱不。。截图下看看")
 	form.Add("post", "上传照片")
 
