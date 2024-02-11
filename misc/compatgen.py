@@ -124,8 +124,9 @@ if __name__ == '__main__':
                 result.append('#define {} 0'.format(a))  # 0 for nil
 
         result.append(
-            "#if (LIBCURL_VERSION_MINOR == {} && LIBCURL_VERSION_PATCH < {}) || LIBCURL_VERSION_MINOR < {} ".format(
-                minor, patch, minor))
+            # "#if (LIBCURL_VERSION_MINOR == {} && LIBCURL_VERSION_PATCH < {}) || LIBCURL_VERSION_MINOR < {} ".format(
+            "#if (LIBCURL_VERSION_MAJOR == {} && ((LIBCURL_VERSION_MINOR == {} && LIBCURL_VERSION_PATCH < {}) || LIBCURL_VERSION_MINOR < {}))".format(
+                major, minor, patch, minor))
 
         result_tail.insert(0, "#endif /* {}.{}.{} */".format(major, minor, patch))
 
