@@ -3,9 +3,18 @@ go-curl
 
 [![Build Status](https://secure.travis-ci.org/andelf/go-curl.png?branch=master)](http://travis-ci.org/andelf/go-curl)
 
-my golang libcurl(curl) binding.
+go-curl is a GoLang interface to [libcurl](https://curl.haxx.se/libcurl/),
+the multiprotocol file transfer library. Similar to the HTTP
+support in [net/http] (https://pkg.go.dev/net/http), go-curl can be used to
+fetch objects from a Go program. While go-curl can provide simple fetches,
+it also exposes most of the functionality of libcurl, including:
 
-See more examples in ./examples/ directory~!
+ * Speed - libcurl is very fast.
+ * Multiple protocol (not just HTTP).
+ * SSL, authentication and proxy support.
+ * Support for libcurl's callbacks.
+
+This said, libcurl API can be less easy to learn than net/http.
 
 LICENSE
 -------
@@ -22,11 +31,15 @@ Current Development Status
  * partly implement share & multi interface
  * new callback function prototype
 
+Requirements
+------------
+ * Any version of Go
+ * libcurl 7.x or higher (including development headers and static/dynamic libs)
+ * Python 3 (used only by configure scripts)
+
+
 How to Install
 --------------
-
-Make Sure You Have libcurl (and its develop headers, static/dynamic libs) installed!
-
 
     $ go get -u github.com/andelf/go-curl
 
@@ -55,9 +68,9 @@ func main() {
     easy := curl.EasyInit()
     defer easy.Cleanup()
 
-    easy.Setopt(curl.OPT_URL, "http://www.baidu.com/")
+    easy.Setopt(curl.OPT_URL, "https://www.baidu.com/")
 
-    // make a callback function
+    // OPTIONAL - make a callback function
     fooTest := func (buf []byte, userdata interface{}) bool {
         println("DEBUG: size=>", len(buf))
         println("DEBUG: content=>", string(buf))
@@ -71,3 +84,5 @@ func main() {
     }
 }
 ```
+
+See also the [examples](./examples/) directory!

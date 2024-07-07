@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	curl "github.com/andelf/go-curl"
 	"os"
 	"reflect"
+
+	curl "github.com/andelf/go-curl"
 )
 
 const endl = "\n"
@@ -37,7 +38,7 @@ func main() {
 	}
 	//print("set url =>", ret.Setopt(curl.OPT_URL, "http://commondatastorage.googleapis.com/chromium-browser-continuous/Linux_x64/104547/chrome-linux.zip"), endl)
 
-	print("set user_agent =>", ret.Setopt(curl.OPT_USERAGENT, "go-curl v0.0.1") == nil, endl)
+	print("set user_agent =>", ret.Setopt(curl.OPT_USERAGENT, "github.com/andelf/go-curl v0.0.1") == nil, endl)
 	// add to DNS cache
 	print("set resolve =>", ret.Setopt(curl.OPT_RESOLVE, []string{"www.baidu.com:8000:127.0.0.1"}) == nil, endl)
 	// ret.EasyReset()  clean seted

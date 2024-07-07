@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import os
@@ -118,5 +118,5 @@ result.append("#error your version is TOOOOOOOO low")
 
 result.extend(result_tail)
 
-with open("./compat.h", 'w') as fp:
+with open("./compat.h", 'w', encoding='utf-8') as fp:
     fp.write('\n'.join(result))
