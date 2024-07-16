@@ -53,35 +53,27 @@ Current Status
  * Mac OS
    * passed go1 (Mac OS X 10.7.3, curl 7.21.4)
 
+NOTE: Above information is outdated ("help wanted")
+
 Sample Program
 --------------
 
+Following comes from [examples/https.go](./examples/https.go)
+Simply type `go run ./examples/https.go` to execute.
 ```go
 package main
 
 import (
-    "fmt"
-    curl "github.com/andelf/go-curl"
+	curl "github.com/andelf/go-curl"
 )
 
 func main() {
-    easy := curl.EasyInit()
-    defer easy.Cleanup()
-
-    easy.Setopt(curl.OPT_URL, "https://www.baidu.com/")
-
-    // OPTIONAL - make a callback function
-    fooTest := func (buf []byte, userdata interface{}) bool {
-        println("DEBUG: size=>", len(buf))
-        println("DEBUG: content=>", string(buf))
-        return true
-    }
-
-    easy.Setopt(curl.OPT_WRITEFUNCTION, fooTest)
-
-    if err := easy.Perform(); err != nil {
-        fmt.Printf("ERROR: %v\n", err)
-    }
+	easy := curl.EasyInit()
+	defer easy.Cleanup()
+	if easy != nil {
+		easy.Setopt(curl.OPT_URL, "https://baidu.com/")
+		easy.Perform()
+	}
 }
 ```
 

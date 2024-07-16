@@ -1,9 +1,45 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
+""" codegen.py reads curl project's curl.h, outputting go-curl's compat.h
+
+The purpose of compatggen.py is to generate compat.h defines which are needed
+by go-curl build process. Most users of co-curl can stop reading here,
+because a usable compat.h is already included in the go-curl source.
+
+compatgen.py should be run from the go-curl source root, where it will
+attempt to locate 'curl.h' in the locations defined by `target_dirs`.
+
+
+CURL_GIT_PATH (if defined) must point to the location of your curl source
+repository. For example you might check out curl from
+https://github.com/curl/curl and have that saved to your local
+directory `/Users/example-home/git/curl`
+
+Usage:
+
+CURL_GIT_PATH=/path-to-git-repos/curl ./misc/compatgen.py
+
+Example:
+CURL_GIT_PATH=/Users/example-user/Projects/c/curl python3 ./misc/compatgen.py
+
+File Input:
+(curl project) include/curl/header.h
+
+File Output:
+compat.h
+
+Todo:
+* Further code review ("help wanted")
+* More docstrings/help. Error checking. Cleanup redefined variable scopes.
+"""
+
 import os
 import re
 
+# CURL_GIT_PATH is the location you git checked out the curl project.
+# You will need to supply this variable and value when invoking this script.
 CURL_GIT_PATH = os.environ.get("CURL_GIT_PATH", './curl')
 
 target_dirs = [
@@ -15,7 +51,7 @@ target_dirs = [
 ]
 
 
-def get_curl_path():
+def get_curl_path() -> str:
     for d in target_dirs:
         for root, dirs, files in os.walk(d):
             if 'curl.h' in files:
@@ -23,8 +59,13 @@ def get_curl_path():
     raise Exception("Not found")
 
 
-def version_symbol(ver):
-    os.system('cd "{}" && git status --porcelain && git checkout -f "{}"'.format(CURL_GIT_PATH, ver))
+def version_symbol(ver:str) -> list[list[str], list[str], list[str], list[str], list[str]]:
+    """Returns lists of symbol info, when given argument of curl's Git tag."""
+
+    # force switch (discard changes) and checkout each of the curl branches 
+    checkout_cmd = 'cd "{}" && git status --porcelain && git -c advice.detachedHead=false checkout -f "{}"'.format(CURL_GIT_PATH, ver)
+
+    os.system(checkout_cmd)
     opts = []
     codes = []
     infos = []
@@ -70,9 +111,28 @@ def version_symbol(ver):
     return opts, codes, infos, vers, auths
 
 
-tags = os.popen("cd {} && git tag | grep -E 'curl-7_[0-9]+_[0-9]+$'".format(CURL_GIT_PATH)).read().split('\n')[:-1]
-tags = filter(lambda t: int(t.split('-')[1].split('_')[1]) >= 10, tags)
-versions = sorted(tags, key=lambda o: map(int, o.split('-')[1].split('_')), reverse=True)
+def extract_version(tag_str:str) -> dict:
+    """Converts a curl git tag (curl-8_8_0) into a dict, ex.: {'major': 8, 'minor': 8, 'patch': 0, 'version': 'curl-8_8_0'}"""
+    fields = re.search(r"curl-([0-9]+)_([0-9]+)_([0-9]+)", tag_str)
+    version = {
+      "major" : int(fields.group(1)),
+      "minor" : int(fields.group(2)),
+      "patch" : int(fields.group(3)),
+      "version" : tag_str
+    }
+    return version
+
+## valid versions that are compatible are 7_16_XXX or higher
+def is_valid_version(version:dict) -> bool:
+    """Returns false when curl version (branch) is less than 7_16_XXX."""
+    return version["major"] >= 8 or (version["major"] == 7 and version["minor"] >= 16)
+
+# fetches a list of tags from the curl repo, matching only format "curl-X_Y_Z"
+get_tags_raw_cmd = "cd {} && git tag | grep -E '^curl-[0-9]+_[0-9]+_[0-9]+$'".format(CURL_GIT_PATH)
+tags_raw = os.popen(get_tags_raw_cmd).read().split('\n')[:-1]
+tags = map(extract_version, tags_raw)
+tags = filter(is_valid_version, tags)
+versions = sorted(tags, key=lambda v: [v["major"], v["minor"], v["patch"]], reverse=True)
 last = version_symbol("master")
 
 template = """
@@ -84,11 +144,15 @@ template = """
 
 result = [template]
 result_tail = ["/* generated ends */\n"]
+
+
 if __name__ == '__main__':
     for ver in versions:
-        minor, patch = map(int, ver.split("_")[-2:])
+        major = ver["major"]
+        minor = ver["minor"]
+        patch = ver["patch"]
+        opts, codes, infos, vers, auths = curr = version_symbol(ver["version"])
 
-        opts, codes, infos, vers, auths = curr = version_symbol(ver)
 
         for o in last[0]:
             if o not in opts:
@@ -110,7 +174,7 @@ if __name__ == '__main__':
             "#if (LIBCURL_VERSION_MINOR == {} && LIBCURL_VERSION_PATCH < {}) || LIBCURL_VERSION_MINOR < {} ".format(
                 minor, patch, minor))
 
-        result_tail.insert(0, "#endif /* 7.{}.{} */".format(minor, patch))
+        result_tail.insert(0, "#endif /* {}.{}.{} */".format(major, minor, patch))
 
         last = curr
 
