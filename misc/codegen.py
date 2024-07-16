@@ -1,9 +1,40 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+""" codegen.py reads curl project's curl.h, outputting go-curl's const_gen.go
+
+codegen.py should be run from the go-curl source root, where it will
+attempt to locate 'curl.h' in the locations defined by `target_dirs`.
+
+
+CURL_GIT_PATH (if defined) must point to the location of your curl source
+repository. For example you might check out curl from
+https://github.com/curl/curl and have that saved to your local
+directory `/Users/example-home/git/curl`
+
+Usage:
+
+CURL_GIT_PATH=/path-to-git-repos/curl ./misc/codegen.py
+
+Example:
+CURL_GIT_PATH=/Users/example-user/Projects/c/curl python3 ./misc/codegen.py
+
+File Input:
+(curl project) include/curl/header.h
+
+File Output:
+const_gen.go
+
+Todo:
+* Further code review ("help wanted")
+* More docstrings/help. Error checking. Cleanup redefined variable scopes.
+"""
+
 import os
 import re
 
+# CURL_GIT_PATH is the location you git checked out the curl project.
+# You will need to supply this variable and value when invoking this script.
 CURL_GIT_PATH = os.environ.get("CURL_GIT_PATH", './curl')
 
 target_dirs = [
@@ -14,7 +45,7 @@ target_dirs = [
     '/usr/include',
 ]
 
-def get_curl_path():
+def get_curl_path() -> str:
     for d in target_dirs:
         for root, dirs, files in os.walk(d):
             if 'curl.h' in files:
@@ -116,5 +147,5 @@ for a in auths:
 
 auth_part = '\n'.join(auth_part)
 
-with open('./const_gen.go', 'w') as fp:
+with open('./const_gen.go', 'w', encoding="utf-8") as fp:
     fp.write(template.format(**locals()))
