@@ -3,13 +3,13 @@ package main
 /*
 #include <stdlib.h>
 #include <sys/select.h>
-static void _FD_ZERO(void *set) {
+static inline void go_FD_ZERO(void *set) {
     FD_ZERO((fd_set*)set);
 }
-static void _FD_SET(int sysfd, void *set) {
+static inline void go_FD_SET(int sysfd, void *set) {
     FD_SET(sysfd, (fd_set*)set);
 }
-static int _FD_ISSET (int sysfd, void *set) {
+static inline int go_FD_ISSET(int sysfd, void *set) {
     return FD_ISSET(sysfd, (fd_set*)set);
 }
 */
@@ -24,19 +24,19 @@ import (
 
 func FD_ZERO(set *syscall.FdSet) {
     s := unsafe.Pointer(set)
-    C._FD_ZERO(s)
+    C.go_FD_ZERO(s)
 }
 
 func FD_SET(sysfd int, set *syscall.FdSet) {
     s := unsafe.Pointer(set)
     fd := C.int(sysfd)
-    C._FD_SET(fd, s)
+    C.go_FD_SET(fd, s)
 }
 
 func FD_ISSET(sysfd int, set *syscall.FdSet) bool {
     s := unsafe.Pointer(set)
     fd := C.int(sysfd)
-    return C._FD_ISSET(fd, s) != 0
+    return C.go_FD_ISSET(fd, s) != 0
 }
 
 func main() {
@@ -76,7 +76,7 @@ func main() {
        		if timeout.Sec > 1 {
        			timeout.Sec = 1
        		} else {
-       			timeout.Usec = int64((curl_timeout % 1000)) * 1000
+       			timeout.Usec = int32((curl_timeout % 1000)) * 1000
        		}
        	}
 
@@ -85,7 +85,7 @@ func main() {
             fmt.Printf("Error FDSET: %s\n", err)
         }
 
-        _, err = syscall.Select(int(max_fd + 1), &rset, &wset, &eset, &timeout)
+        err = syscall.Select(int(max_fd + 1), &rset, &wset, &eset, &timeout)
         if err != nil {
         	fmt.Printf("Error select: %s\n", err)
         } else {
